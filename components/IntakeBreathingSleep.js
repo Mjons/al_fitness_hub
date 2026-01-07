@@ -10,12 +10,17 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { colors } from '../styles/theme';
 
-export const IntakeBreathingSleep = ({ onNext }) => {
+export const IntakeBreathingSleep = ({ onNext, onBack }) => {
   const [noseBreather, setNoseBreather] = useState(null);
   const [sleepHours, setSleepHours] = useState(7);
-  const [sleepQuality, setSleepQuality] = useState(5);
+  const [wakeEnergy, setWakeEnergy] = useState(5);
+
+  const [unsureBreathing, setUnsureBreathing] = useState(false);
+  const [unsureSleep, setUnsureSleep] = useState(false);
+  const [unsureEnergy, setUnsureEnergy] = useState(false);
 
   const calculateBreathingScore = () => {
+    if (unsureBreathing) return 5;
     let score = 0;
     if (noseBreather) score += 5;
     return Math.max(1, Math.min(10, score + 3));
@@ -23,18 +28,18 @@ export const IntakeBreathingSleep = ({ onNext }) => {
 
   const calculateSleepScore = () => {
     let score = 0;
-    if (sleepHours >= 7) score += 3;
-    if (sleepQuality >= 8) score += 3;
+    if (!unsureSleep && sleepHours >= 7) score += 3;
+    if (!unsureEnergy && wakeEnergy >= 8) score += 3;
     return Math.max(1, Math.min(10, score + 3));
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <MaterialIcons name="arrow-back" size={24} color={colors.white} />
         </TouchableOpacity>
-        <Text style={styles.stepText}>Step 6 of 8</Text>
+        <Text style={styles.stepText}>Step 6 of 7</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -53,21 +58,32 @@ export const IntakeBreathingSleep = ({ onNext }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>
-            Are you a nose breather during the day?
-          </Text>
-          <View style={styles.optionsRow}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionLabel}>
+              Are you a nose breather during the day?
+            </Text>
+            <TouchableOpacity
+              style={[styles.unsureToggle, unsureBreathing && styles.unsureToggleActive]}
+              onPress={() => setUnsureBreathing(!unsureBreathing)}
+            >
+              <Text style={[styles.unsureText, unsureBreathing && styles.unsureTextActive]}>
+                I don't know
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.optionsRow, unsureBreathing && styles.dimmed]}>
             <TouchableOpacity
               style={[
                 styles.optionButton,
-                noseBreather === true && styles.optionButtonActive,
+                !unsureBreathing && noseBreather === true && styles.optionButtonActive,
               ]}
-              onPress={() => setNoseBreather(true)}
+              onPress={() => !unsureBreathing && setNoseBreather(true)}
+              activeOpacity={unsureBreathing ? 1 : 0.7}
             >
               <Text
                 style={[
                   styles.optionText,
-                  noseBreather === true && styles.optionTextActive,
+                  !unsureBreathing && noseBreather === true && styles.optionTextActive,
                 ]}
               >
                 Yes
@@ -76,14 +92,15 @@ export const IntakeBreathingSleep = ({ onNext }) => {
             <TouchableOpacity
               style={[
                 styles.optionButton,
-                noseBreather === false && styles.optionButtonActive,
+                !unsureBreathing && noseBreather === false && styles.optionButtonActive,
               ]}
-              onPress={() => setNoseBreather(false)}
+              onPress={() => !unsureBreathing && setNoseBreather(false)}
+              activeOpacity={unsureBreathing ? 1 : 0.7}
             >
               <Text
                 style={[
                   styles.optionText,
-                  noseBreather === false && styles.optionTextActive,
+                  !unsureBreathing && noseBreather === false && styles.optionTextActive,
                 ]}
               >
                 No
@@ -93,9 +110,19 @@ export const IntakeBreathingSleep = ({ onNext }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Average Sleep (Hours)</Text>
-          <View style={styles.sliderCard}>
-            <Text style={styles.sliderValue}>{sleepHours}</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionLabel}>Average Sleep (Hours)</Text>
+            <TouchableOpacity
+              style={[styles.unsureToggle, unsureSleep && styles.unsureToggleActive]}
+              onPress={() => setUnsureSleep(!unsureSleep)}
+            >
+              <Text style={[styles.unsureText, unsureSleep && styles.unsureTextActive]}>
+                I don't know
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.sliderCard, unsureSleep && styles.dimmed]}>
+            <Text style={styles.sliderValue}>{unsureSleep ? '—' : sleepHours}</Text>
             <Slider
               style={styles.slider}
               minimumValue={4}
@@ -103,46 +130,62 @@ export const IntakeBreathingSleep = ({ onNext }) => {
               step={1}
               value={sleepHours}
               onValueChange={setSleepHours}
-              minimumTrackTintColor={colors.primary}
+              minimumTrackTintColor={unsureSleep ? colors.gray[600] : colors.primary}
               maximumTrackTintColor={colors.gray[700]}
-              thumbTintColor={colors.primary}
+              thumbTintColor={unsureSleep ? colors.gray[600] : colors.primary}
+              disabled={unsureSleep}
             />
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Sleep Quality (1-10)</Text>
-          <View style={styles.sliderCard}>
-            <Text style={styles.sliderValue}>{sleepQuality}</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionLabel}>How energetic do you feel when you wake up?</Text>
+            <TouchableOpacity
+              style={[styles.unsureToggle, unsureEnergy && styles.unsureToggleActive]}
+              onPress={() => setUnsureEnergy(!unsureEnergy)}
+            >
+              <Text style={[styles.unsureText, unsureEnergy && styles.unsureTextActive]}>
+                I don't know
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.sliderCard, unsureEnergy && styles.dimmed]}>
+            <Text style={styles.sliderValue}>{unsureEnergy ? '—' : wakeEnergy}</Text>
             <Slider
               style={styles.slider}
               minimumValue={1}
               maximumValue={10}
               step={1}
-              value={sleepQuality}
-              onValueChange={setSleepQuality}
-              minimumTrackTintColor={colors.primary}
+              value={wakeEnergy}
+              onValueChange={setWakeEnergy}
+              minimumTrackTintColor={unsureEnergy ? colors.gray[600] : colors.primary}
               maximumTrackTintColor={colors.gray[700]}
-              thumbTintColor={colors.primary}
+              thumbTintColor={unsureEnergy ? colors.gray[600] : colors.primary}
+              disabled={unsureEnergy}
             />
+            <View style={styles.sliderLabels}>
+              <Text style={styles.sliderLabelText}>No energy</Text>
+              <Text style={styles.sliderLabelText}>Bouncing off walls</Text>
+            </View>
           </View>
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.button, noseBreather === null && styles.buttonDisabled]}
+          style={[styles.button, (!unsureBreathing && noseBreather === null) && styles.buttonDisabled]}
           onPress={() =>
-            noseBreather !== null &&
+            (unsureBreathing || noseBreather !== null) &&
             onNext(calculateBreathingScore(), calculateSleepScore())
           }
-          disabled={noseBreather === null}
+          disabled={!unsureBreathing && noseBreather === null}
           activeOpacity={0.8}
         >
           <Text
             style={[
               styles.buttonText,
-              noseBreather === null && styles.buttonTextDisabled,
+              (!unsureBreathing && noseBreather === null) && styles.buttonTextDisabled,
             ]}
           >
             Continue
@@ -150,7 +193,7 @@ export const IntakeBreathingSleep = ({ onNext }) => {
           <MaterialIcons
             name="arrow-forward"
             size={20}
-            color={noseBreather !== null ? colors.black : colors.gray[600]}
+            color={(unsureBreathing || noseBreather !== null) ? colors.black : colors.gray[600]}
           />
         </TouchableOpacity>
       </View>
@@ -219,13 +262,43 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 40,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionLabel: {
     fontSize: 12,
     fontWeight: '700',
     color: colors.gray[500],
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: 16,
+    flex: 1,
+  },
+  unsureToggle: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.gray[700],
+    marginLeft: 8,
+  },
+  unsureToggleActive: {
+    backgroundColor: `${colors.primary}20`,
+    borderColor: colors.primary,
+  },
+  unsureText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.gray[500],
+  },
+  unsureTextActive: {
+    color: colors.primary,
+  },
+  dimmed: {
+    opacity: 0.4,
   },
   optionsRow: {
     flexDirection: 'row',
@@ -269,6 +342,18 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 40,
     marginTop: 16,
+  },
+  sliderLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 8,
+  },
+  sliderLabelText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.gray[500],
+    textTransform: 'uppercase',
   },
   footer: {
     padding: 24,

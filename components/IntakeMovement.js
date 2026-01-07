@@ -10,18 +10,33 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { colors } from '../styles/theme';
 
-export const IntakeMovement = ({ onNext }) => {
+export const IntakeMovement = ({ onNext, onBack }) => {
   const [steps, setSteps] = useState(6000);
   const [freq, setFreq] = useState(1);
+  const [cardioFreq, setCardioFreq] = useState(1);
   const [level, setLevel] = useState('Low');
+
+  const [unsureSteps, setUnsureSteps] = useState(false);
+  const [unsureFreq, setUnsureFreq] = useState(false);
+  const [unsureCardio, setUnsureCardio] = useState(false);
+  const [unsureLevel, setUnsureLevel] = useState(false);
 
   const calculateScore = () => {
     let score = 0;
-    if (steps >= 8000) score += 3;
-    if (freq >= 2) score += 3;
-    if (level === 'High') score += 2;
-    return Math.max(1, Math.min(10, score + 2));
+    if (!unsureSteps && steps >= 8000) score += 3;
+    if (!unsureFreq && freq >= 2) score += 2;
+    if (!unsureCardio && cardioFreq >= 2) score += 2;
+    if (!unsureLevel && level === 'High') score += 2;
+    return Math.max(1, Math.min(10, score + 1));
   };
+
+  const getMovementData = () => ({
+    steps: unsureSteps ? null : steps,
+    freq: unsureFreq ? null : freq,
+    cardioFreq: unsureCardio ? null : cardioFreq,
+    level: unsureLevel ? null : level,
+    unsure: { steps: unsureSteps, freq: unsureFreq, cardio: unsureCardio, level: unsureLevel },
+  });
 
   const freqOptions = [0, 1, 2, 3, '4+'];
   const levelOptions = ['Low', 'Medium', 'High'];
@@ -29,10 +44,10 @@ export const IntakeMovement = ({ onNext }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <MaterialIcons name="arrow-back" size={24} color={colors.white} />
         </TouchableOpacity>
-        <Text style={styles.stepText}>Step 4 of 8</Text>
+        <Text style={styles.stepText}>Step 4 of 7</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -46,9 +61,21 @@ export const IntakeMovement = ({ onNext }) => {
         <Text style={styles.title}>Pillar 5: Movement.</Text>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Average Daily Steps</Text>
-          <View style={styles.sliderCard}>
-            <Text style={styles.stepsValue}>{steps.toLocaleString()}</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionLabel}>Average Daily Steps</Text>
+            <TouchableOpacity
+              style={[styles.unsureToggle, unsureSteps && styles.unsureToggleActive]}
+              onPress={() => setUnsureSteps(!unsureSteps)}
+            >
+              <Text style={[styles.unsureText, unsureSteps && styles.unsureTextActive]}>
+                I'm not sure
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.sliderCard, unsureSteps && styles.dimmed]}>
+            <Text style={styles.stepsValue}>
+              {unsureSteps ? '—' : steps.toLocaleString()}
+            </Text>
             <Slider
               style={styles.slider}
               minimumValue={0}
@@ -56,9 +83,10 @@ export const IntakeMovement = ({ onNext }) => {
               step={500}
               value={steps}
               onValueChange={setSteps}
-              minimumTrackTintColor={colors.primary}
+              minimumTrackTintColor={unsureSteps ? colors.gray[600] : colors.primary}
               maximumTrackTintColor={colors.gray[700]}
-              thumbTintColor={colors.primary}
+              thumbTintColor={unsureSteps ? colors.gray[600] : colors.primary}
+              disabled={unsureSteps}
             />
             <View style={styles.sliderLabels}>
               <Text style={styles.sliderLabel}>Sedentary</Text>
@@ -69,18 +97,29 @@ export const IntakeMovement = ({ onNext }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Resistance Training Frequency</Text>
-          <View style={styles.freqContainer}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionLabel}>Resistance Training Frequency</Text>
+            <TouchableOpacity
+              style={[styles.unsureToggle, unsureFreq && styles.unsureToggleActive]}
+              onPress={() => setUnsureFreq(!unsureFreq)}
+            >
+              <Text style={[styles.unsureText, unsureFreq && styles.unsureTextActive]}>
+                I'm not sure
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.freqContainer, unsureFreq && styles.dimmed]}>
             {freqOptions.map((n, i) => (
               <TouchableOpacity
                 key={i}
-                style={[styles.freqButton, freq === i && styles.freqButtonActive]}
-                onPress={() => setFreq(i)}
+                style={[styles.freqButton, !unsureFreq && freq === i && styles.freqButtonActive]}
+                onPress={() => !unsureFreq && setFreq(i)}
+                activeOpacity={unsureFreq ? 1 : 0.7}
               >
-                <Text style={[styles.freqValue, freq === i && styles.freqValueActive]}>
+                <Text style={[styles.freqValue, !unsureFreq && freq === i && styles.freqValueActive]}>
                   {n}
                 </Text>
-                <Text style={[styles.freqLabel, freq === i && styles.freqLabelActive]}>
+                <Text style={[styles.freqLabel, !unsureFreq && freq === i && styles.freqLabelActive]}>
                   Days
                 </Text>
               </TouchableOpacity>
@@ -89,15 +128,57 @@ export const IntakeMovement = ({ onNext }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Overall Activity Level</Text>
-          <View style={styles.levelContainer}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionLabel}>Cardio Training Frequency</Text>
+            <TouchableOpacity
+              style={[styles.unsureToggle, unsureCardio && styles.unsureToggleActive]}
+              onPress={() => setUnsureCardio(!unsureCardio)}
+            >
+              <Text style={[styles.unsureText, unsureCardio && styles.unsureTextActive]}>
+                I'm not sure
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.freqContainer, unsureCardio && styles.dimmed]}>
+            {freqOptions.map((n, i) => (
+              <TouchableOpacity
+                key={i}
+                style={[styles.freqButton, !unsureCardio && cardioFreq === i && styles.freqButtonActive]}
+                onPress={() => !unsureCardio && setCardioFreq(i)}
+                activeOpacity={unsureCardio ? 1 : 0.7}
+              >
+                <Text style={[styles.freqValue, !unsureCardio && cardioFreq === i && styles.freqValueActive]}>
+                  {n}
+                </Text>
+                <Text style={[styles.freqLabel, !unsureCardio && cardioFreq === i && styles.freqLabelActive]}>
+                  Days
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionLabel}>Overall Activity Level</Text>
+            <TouchableOpacity
+              style={[styles.unsureToggle, unsureLevel && styles.unsureToggleActive]}
+              onPress={() => setUnsureLevel(!unsureLevel)}
+            >
+              <Text style={[styles.unsureText, unsureLevel && styles.unsureTextActive]}>
+                I'm not sure
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.levelContainer, unsureLevel && styles.dimmed]}>
             {levelOptions.map((l) => (
               <TouchableOpacity
                 key={l}
-                style={[styles.levelButton, level === l && styles.levelButtonActive]}
-                onPress={() => setLevel(l)}
+                style={[styles.levelButton, !unsureLevel && level === l && styles.levelButtonActive]}
+                onPress={() => !unsureLevel && setLevel(l)}
+                activeOpacity={unsureLevel ? 1 : 0.7}
               >
-                <Text style={[styles.levelText, level === l && styles.levelTextActive]}>
+                <Text style={[styles.levelText, !unsureLevel && level === l && styles.levelTextActive]}>
                   {l}
                 </Text>
               </TouchableOpacity>
@@ -173,13 +254,41 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 40,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionLabel: {
     fontSize: 12,
     fontWeight: '700',
     color: colors.gray[500],
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: 16,
+  },
+  unsureToggle: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.gray[700],
+  },
+  unsureToggleActive: {
+    backgroundColor: `${colors.primary}20`,
+    borderColor: colors.primary,
+  },
+  unsureText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.gray[500],
+  },
+  unsureTextActive: {
+    color: colors.primary,
+  },
+  dimmed: {
+    opacity: 0.4,
   },
   sliderCard: {
     backgroundColor: colors.surfaceDark,

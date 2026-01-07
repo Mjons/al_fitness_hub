@@ -111,18 +111,6 @@ export const NutritionSummary = ({ onNavigate }) => {
             </View>
           </View>
         </View>
-
-        <TouchableOpacity style={styles.inspirationCard}>
-          <View>
-            <Text style={styles.inspirationTitle}>Need inspiration?</Text>
-            <Text style={styles.inspirationSubtitle}>
-              Check out 15-minute meal ideas.
-            </Text>
-          </View>
-          <View style={styles.inspirationButton}>
-            <Text style={styles.inspirationButtonText}>View Meals</Text>
-          </View>
-        </TouchableOpacity>
       </ScrollView>
 
       <TouchableOpacity
@@ -340,35 +328,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginTop: 8,
-  },
-  inspirationCard: {
-    backgroundColor: colors.gray[800],
-    borderRadius: 16,
-    padding: 24,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  inspirationTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.white,
-  },
-  inspirationSubtitle: {
-    fontSize: 14,
-    color: colors.gray[400],
-    marginTop: 4,
-  },
-  inspirationButton: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  inspirationButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.white,
   },
   fab: {
     position: 'absolute',

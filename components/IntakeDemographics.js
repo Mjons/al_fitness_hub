@@ -10,7 +10,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors } from '../styles/theme';
 
-export const IntakeDemographics = ({ onNext }) => {
+export const IntakeDemographics = ({ onNext, onBack }) => {
   const [sex, setSex] = useState(null);
   const [age, setAge] = useState('');
   const [weight, setWeight] = useState('');
@@ -21,10 +21,10 @@ export const IntakeDemographics = ({ onNext }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <MaterialIcons name="arrow-back" size={24} color={colors.white} />
         </TouchableOpacity>
-        <Text style={styles.stepText}>Step 2 of 8</Text>
+        <Text style={styles.stepText}>Step 2 of 7</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -108,7 +108,7 @@ export const IntakeDemographics = ({ onNext }) => {
         <View style={styles.tipContainer}>
           <MaterialIcons name="info" size={20} color={colors.primary} />
           <Text style={styles.tipText}>
-            Coach Al: "Your goal weight helps me build the 'Roadmap to the New You' in the Pro tier."
+            Coach Al: "Your goal weight helps me build the 'Roadmap to the New You'."
           </Text>
         </View>
       </ScrollView>

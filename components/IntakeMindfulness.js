@@ -10,11 +10,17 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { colors } from '../styles/theme';
 
-export const IntakeMindfulness = ({ onNext }) => {
+export const IntakeMindfulness = ({ onNext, onBack }) => {
   const [outdoors, setOutdoors] = useState(1);
   const [stress, setStress] = useState(5);
+  const [mindfulness, setMindfulness] = useState(null);
+
+  const [unsureOutdoors, setUnsureOutdoors] = useState(false);
+  const [unsureStress, setUnsureStress] = useState(false);
+  const [unsureMindfulness, setUnsureMindfulness] = useState(false);
 
   const calculateMindfulnessScore = () => {
+    if (unsureStress) return 5;
     let score = 0;
     if (stress <= 3) score += 5;
     else if (stress <= 6) score += 2;
@@ -22,6 +28,7 @@ export const IntakeMindfulness = ({ onNext }) => {
   };
 
   const calculateEnvironmentScore = () => {
+    if (unsureOutdoors) return 5;
     let score = 0;
     if (outdoors >= 3) score += 5;
     else if (outdoors >= 1) score += 2;
@@ -33,10 +40,10 @@ export const IntakeMindfulness = ({ onNext }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <MaterialIcons name="arrow-back" size={24} color={colors.white} />
         </TouchableOpacity>
-        <Text style={styles.stepText}>Step 7 of 8</Text>
+        <Text style={styles.stepText}>Step 7 of 7</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -55,21 +62,32 @@ export const IntakeMindfulness = ({ onNext }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Hours spent outdoors daily?</Text>
-          <View style={styles.optionsRow}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionLabel}>Hours Spent outside per day</Text>
+            <TouchableOpacity
+              style={[styles.unsureToggle, unsureOutdoors && styles.unsureToggleActive]}
+              onPress={() => setUnsureOutdoors(!unsureOutdoors)}
+            >
+              <Text style={[styles.unsureText, unsureOutdoors && styles.unsureTextActive]}>
+                I don't know
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.optionsRow, unsureOutdoors && styles.dimmed]}>
             {outdoorOptions.map((h, i) => (
               <TouchableOpacity
                 key={i}
                 style={[
                   styles.optionButton,
-                  outdoors === i && styles.optionButtonActive,
+                  !unsureOutdoors && outdoors === i && styles.optionButtonActive,
                 ]}
-                onPress={() => setOutdoors(i)}
+                onPress={() => !unsureOutdoors && setOutdoors(i)}
+                activeOpacity={unsureOutdoors ? 1 : 0.7}
               >
                 <Text
                   style={[
                     styles.optionText,
-                    outdoors === i && styles.optionTextActive,
+                    !unsureOutdoors && outdoors === i && styles.optionTextActive,
                   ]}
                 >
                   {h}
@@ -80,9 +98,19 @@ export const IntakeMindfulness = ({ onNext }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Current Stress Level (1-10)</Text>
-          <View style={styles.sliderCard}>
-            <Text style={styles.sliderValue}>{stress}</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionLabel}>Current Stress Level</Text>
+            <TouchableOpacity
+              style={[styles.unsureToggle, unsureStress && styles.unsureToggleActive]}
+              onPress={() => setUnsureStress(!unsureStress)}
+            >
+              <Text style={[styles.unsureText, unsureStress && styles.unsureTextActive]}>
+                I don't know
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.sliderCard, unsureStress && styles.dimmed]}>
+            <Text style={styles.sliderValue}>{unsureStress ? '—' : stress}</Text>
             <Slider
               style={styles.slider}
               minimumValue={1}
@@ -90,21 +118,64 @@ export const IntakeMindfulness = ({ onNext }) => {
               step={1}
               value={stress}
               onValueChange={setStress}
-              minimumTrackTintColor={colors.primary}
+              minimumTrackTintColor={unsureStress ? colors.gray[600] : colors.primary}
               maximumTrackTintColor={colors.gray[700]}
-              thumbTintColor={colors.primary}
+              thumbTintColor={unsureStress ? colors.gray[600] : colors.primary}
+              disabled={unsureStress}
             />
+            <View style={styles.sliderLabels}>
+              <Text style={styles.sliderLabelText}>1 - very stressed</Text>
+              <Text style={styles.sliderLabelText}>10 - very peaceful</Text>
+            </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Do you practice daily gratitude?</Text>
-          <View style={styles.optionsRow}>
-            <TouchableOpacity style={styles.optionButton}>
-              <Text style={styles.optionText}>Yes</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionLabel}>Do you practice daily mindfulness?</Text>
+            <TouchableOpacity
+              style={[styles.unsureToggle, unsureMindfulness && styles.unsureToggleActive]}
+              onPress={() => setUnsureMindfulness(!unsureMindfulness)}
+            >
+              <Text style={[styles.unsureText, unsureMindfulness && styles.unsureTextActive]}>
+                I don't know
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.optionButton}>
-              <Text style={styles.optionText}>Sometimes</Text>
+          </View>
+          <View style={[styles.optionsRow, unsureMindfulness && styles.dimmed]}>
+            <TouchableOpacity
+              style={[
+                styles.optionButton,
+                !unsureMindfulness && mindfulness === 'yes' && styles.optionButtonActive,
+              ]}
+              onPress={() => !unsureMindfulness && setMindfulness('yes')}
+              activeOpacity={unsureMindfulness ? 1 : 0.7}
+            >
+              <Text
+                style={[
+                  styles.optionText,
+                  !unsureMindfulness && mindfulness === 'yes' && styles.optionTextActive,
+                ]}
+              >
+                Yes
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.optionButton,
+                !unsureMindfulness && mindfulness === 'sometimes' && styles.optionButtonActive,
+              ]}
+              onPress={() => !unsureMindfulness && setMindfulness('sometimes')}
+              activeOpacity={unsureMindfulness ? 1 : 0.7}
+            >
+              <Text
+                style={[
+                  styles.optionText,
+                  !unsureMindfulness && mindfulness === 'sometimes' && styles.optionTextActive,
+                ]}
+              >
+                Sometimes
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -187,13 +258,41 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 40,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionLabel: {
     fontSize: 12,
     fontWeight: '700',
     color: colors.gray[500],
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: 16,
+    flex: 1,
+  },
+  unsureToggle: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceDark,
+  },
+  unsureToggleActive: {
+    backgroundColor: `${colors.primary}20`,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  unsureText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.gray[500],
+  },
+  unsureTextActive: {
+    color: colors.primary,
+  },
+  dimmed: {
+    opacity: 0.4,
   },
   optionsRow: {
     flexDirection: 'row',
@@ -238,6 +337,16 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 40,
     marginTop: 16,
+  },
+  sliderLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 8,
+  },
+  sliderLabelText: {
+    fontSize: 11,
+    color: colors.gray[500],
   },
   footer: {
     padding: 24,

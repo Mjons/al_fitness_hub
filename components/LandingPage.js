@@ -188,7 +188,7 @@ export const LandingPage = ({ onGetStarted }) => {
 
           <Text style={styles.heroSubtitle}>
             From burnout to breakthrough in 30 days. Master the 7 Pillars of
-            Health with Coach Al's proven system for busy professionals.
+            Health with Coach Al's proven system for busy parents.
           </Text>
 
           <TouchableOpacity

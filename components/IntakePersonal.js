@@ -10,7 +10,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors } from '../styles/theme';
 
-export const IntakePersonal = ({ onNext }) => {
+export const IntakePersonal = ({ onNext, onBack }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
 
@@ -19,10 +19,10 @@ export const IntakePersonal = ({ onNext }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <MaterialIcons name="arrow-back" size={24} color={colors.white} />
         </TouchableOpacity>
-        <Text style={styles.stepText}>Step 1 of 8</Text>
+        <Text style={styles.stepText}>Step 1 of 7</Text>
         <View style={{ width: 40 }} />
       </View>
 

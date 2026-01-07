@@ -9,7 +9,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors } from '../styles/theme';
 
-export const IntakeNutrition = ({ onNext }) => {
+export const IntakeNutrition = ({ onNext, onBack }) => {
   const [processedFreq, setProcessedFreq] = useState('Sometimes');
   const [water, setWater] = useState(4);
 
@@ -27,15 +27,20 @@ export const IntakeNutrition = ({ onNext }) => {
     return Math.max(1, Math.min(10, score + 2));
   };
 
-  const processedOptions = ['Rarely', 'Sometimes', 'Often', 'Daily'];
+  const processedOptions = [
+    { value: 'Rarely', label: 'Rarely', desc: 'Once per week' },
+    { value: 'Sometimes', label: 'Sometimes', desc: 'Once or twice a week' },
+    { value: 'Often', label: 'Often', desc: 'Every other day' },
+    { value: 'Daily', label: 'Daily', desc: 'Every day' },
+  ];
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <MaterialIcons name="arrow-back" size={24} color={colors.white} />
         </TouchableOpacity>
-        <Text style={styles.stepText}>Step 5 of 8</Text>
+        <Text style={styles.stepText}>Step 5 of 7</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -51,22 +56,30 @@ export const IntakeNutrition = ({ onNext }) => {
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Ultra-processed meals/week</Text>
           <View style={styles.optionsGrid}>
-            {processedOptions.map((val) => (
+            {processedOptions.map((opt) => (
               <TouchableOpacity
-                key={val}
+                key={opt.value}
                 style={[
                   styles.optionButton,
-                  processedFreq === val && styles.optionButtonActive,
+                  processedFreq === opt.value && styles.optionButtonActive,
                 ]}
-                onPress={() => setProcessedFreq(val)}
+                onPress={() => setProcessedFreq(opt.value)}
               >
                 <Text
                   style={[
-                    styles.optionText,
-                    processedFreq === val && styles.optionTextActive,
+                    styles.optionLabel,
+                    processedFreq === opt.value && styles.optionLabelActive,
                   ]}
                 >
-                  {val}
+                  {opt.label}
+                </Text>
+                <Text
+                  style={[
+                    styles.optionDesc,
+                    processedFreq === opt.value && styles.optionDescActive,
+                  ]}
+                >
+                  {opt.desc}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -77,7 +90,7 @@ export const IntakeNutrition = ({ onNext }) => {
           <Text style={styles.sectionLabel}>Daily Water Intake (Glasses)</Text>
           <View style={styles.waterCard}>
             <View style={styles.waterGrid}>
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
                 <TouchableOpacity
                   key={i}
                   onPress={() => setWater(i)}
@@ -85,7 +98,7 @@ export const IntakeNutrition = ({ onNext }) => {
                 >
                   <MaterialIcons
                     name="water-drop"
-                    size={32}
+                    size={28}
                     color={i <= water ? colors.primary : 'rgba(255,255,255,0.1)'}
                   />
                 </TouchableOpacity>
@@ -180,6 +193,7 @@ const styles = StyleSheet.create({
   optionButton: {
     width: '48%',
     paddingVertical: 16,
+    paddingHorizontal: 12,
     backgroundColor: colors.surfaceDark,
     borderRadius: 12,
     borderWidth: 2,
@@ -190,13 +204,22 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
     backgroundColor: `${colors.primary}15`,
   },
-  optionText: {
-    fontSize: 14,
+  optionLabel: {
+    fontSize: 15,
     fontWeight: '700',
-    color: colors.gray[500],
+    color: colors.gray[400],
   },
-  optionTextActive: {
+  optionLabelActive: {
     color: colors.primary,
+  },
+  optionDesc: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: colors.gray[600],
+    marginTop: 4,
+  },
+  optionDescActive: {
+    color: colors.gray[400],
   },
   waterCard: {
     backgroundColor: colors.surfaceDark,
@@ -209,10 +232,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 16,
+    gap: 12,
   },
   waterDrop: {
-    padding: 8,
+    padding: 4,
   },
   waterLabel: {
     textAlign: 'center',

@@ -5,7 +5,11 @@
       "Bash(node --check:*)",
       "Bash(node --version:*)",
       "Bash(npx expo install:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(npx expo start:*)"
     ]
   }
 }

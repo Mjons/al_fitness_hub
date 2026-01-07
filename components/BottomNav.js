@@ -6,7 +6,7 @@ import { colors } from '../styles/theme';
 export const BottomNav = ({ currentScreen, onNavigate }) => {
   const tabs = [
     { screen: 'DASHBOARD', icon: 'home', label: 'Home' },
-    { screen: 'WORKOUT_LIST', icon: 'fitness-center', label: 'Workouts' },
+    { screen: 'MEDITATION_LIST', icon: 'self-improvement', label: 'Meditate' },
     { screen: 'PILLARS_OVERVIEW', icon: 'pie-chart', label: 'Pillars' },
     { screen: 'NUTRITION_SUMMARY', icon: 'restaurant', label: 'Nutrition' },
     { screen: 'PROGRESS_SUMMARY', icon: 'bar-chart', label: 'Progress' },

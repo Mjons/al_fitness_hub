@@ -10,7 +10,6 @@ import { IntakeMovement } from "./components/IntakeMovement";
 import { IntakeNutrition } from "./components/IntakeNutrition";
 import { IntakeBreathingSleep } from "./components/IntakeBreathingSleep";
 import { IntakeMindfulness } from "./components/IntakeMindfulness";
-import { IntakeRisk } from "./components/IntakeRisk";
 import { SafetyNotice } from "./components/SafetyNotice";
 import { Dashboard } from "./components/Dashboard";
 import { WorkoutList } from "./components/WorkoutList";
@@ -25,6 +24,7 @@ import { ChallengeDetail } from "./components/ChallengeDetail";
 import { BookScreen } from "./components/BookScreen";
 import { ChapterView } from "./components/ChapterView";
 import { LandingPage } from "./components/LandingPage";
+import { MeditationList } from "./components/MeditationList";
 import { colors } from "./styles/theme";
 import { THIRTY_DAY_CHALLENGES } from "./constants";
 
@@ -368,11 +368,11 @@ export default function App() {
           />
         );
       case "INTAKE_PERSONAL":
-        return <IntakePersonal onNext={handleSaveName} />;
+        return <IntakePersonal onNext={handleSaveName} onBack={() => navigateTo("WELCOME")} />;
       case "INTAKE_DEMOGRAPHICS":
-        return <IntakeDemographics onNext={() => navigateTo("INTAKE_GOALS")} />;
+        return <IntakeDemographics onNext={() => navigateTo("INTAKE_GOALS")} onBack={() => navigateTo("INTAKE_PERSONAL")} />;
       case "INTAKE_GOALS":
-        return <IntakeGoals onNext={() => navigateTo("INTAKE_MOVEMENT")} />;
+        return <IntakeGoals onNext={() => navigateTo("INTAKE_MOVEMENT")} onBack={() => navigateTo("INTAKE_DEMOGRAPHICS")} />;
       case "INTAKE_MOVEMENT":
         return (
           <IntakeMovement
@@ -380,6 +380,7 @@ export default function App() {
               setPillarScores((p) => ({ ...p, movement: score }));
               navigateTo("INTAKE_NUTRITION");
             }}
+            onBack={() => navigateTo("INTAKE_GOALS")}
           />
         );
       case "INTAKE_NUTRITION":
@@ -393,6 +394,7 @@ export default function App() {
               }));
               navigateTo("INTAKE_BREATHING_SLEEP");
             }}
+            onBack={() => navigateTo("INTAKE_MOVEMENT")}
           />
         );
       case "INTAKE_BREATHING_SLEEP":
@@ -406,6 +408,7 @@ export default function App() {
               }));
               navigateTo("INTAKE_MINDFULNESS");
             }}
+            onBack={() => navigateTo("INTAKE_NUTRITION")}
           />
         );
       case "INTAKE_MINDFULNESS":
@@ -417,14 +420,13 @@ export default function App() {
                 mindfulness: mScore,
                 environment: eScore,
               }));
-              navigateTo("INTAKE_RISK");
+              navigateTo("SAFETY_NOTICE");
             }}
+            onBack={() => navigateTo("INTAKE_BREATHING_SLEEP")}
           />
         );
-      case "INTAKE_RISK":
-        return <IntakeRisk onNext={() => navigateTo("SAFETY_NOTICE")} />;
       case "SAFETY_NOTICE":
-        return <SafetyNotice onNext={finalizeAssessment} />;
+        return <SafetyNotice onNext={finalizeAssessment} onBack={() => navigateTo("INTAKE_MINDFULNESS")} />;
       case "DASHBOARD":
         return (
           <Dashboard
@@ -465,6 +467,8 @@ export default function App() {
         return <NutritionSummary onNavigate={navigateTo} />;
       case "PROGRESS_SUMMARY":
         return <ProgressSummary onNavigate={navigateTo} />;
+      case "MEDITATION_LIST":
+        return <MeditationList onNavigate={navigateTo} onSelectMeditation={(m) => console.log('Selected:', m.title)} />;
       case "PILLARS_OVERVIEW":
         return <PillarsOverview onNavigate={navigateTo} />;
       case "SETTINGS":

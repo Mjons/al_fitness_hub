@@ -22,7 +22,7 @@ A conversion-focused landing page for the Coach Al wellness app, targeting busy 
 | Element | Content |
 |---------|---------|
 | Headline | "Stop Running on Empty" or "From Burnout to Breakthrough in 30 Days" |
-| Subheadline | "Master the 7 Pillars of Health with Coach Al's proven system for busy professionals and parents" |
+| Subheadline | "Master the 7 Pillars of Health with Coach Al's proven system for busy parents" |
 | CTA Button | "Start Your Free Assessment" |
 | Secondary CTA | "Watch How It Works" (2-min video) |
 | Visual | App mockup showing dashboard with pillar scores |

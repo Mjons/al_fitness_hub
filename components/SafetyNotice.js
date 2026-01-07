@@ -10,13 +10,13 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors } from '../styles/theme';
 
-export const SafetyNotice = ({ onNext }) => {
+export const SafetyNotice = ({ onNext, onBack }) => {
   const [accepted, setAccepted] = useState(false);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <MaterialIcons name="arrow-back" size={24} color={colors.white} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Safety Notice</Text>
@@ -95,7 +95,7 @@ export const SafetyNotice = ({ onNext }) => {
           <Text style={styles.buttonText}>I Understand & Continue</Text>
           <MaterialIcons name="arrow-forward" size={20} color={colors.black} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.backLink}>
+        <TouchableOpacity style={styles.backLink} onPress={onBack}>
           <Text style={styles.backLinkText}>Go Back & Change Selection</Text>
         </TouchableOpacity>
       </View>

@@ -152,17 +152,17 @@ export const Dashboard = ({
           <View style={styles.quickActionsGrid}>
             <TouchableOpacity
               style={styles.quickActionCard}
-              onPress={() => onSelectWorkout(WORKOUTS[0])}
+              onPress={() => onNavigate("MEDITATION_LIST")}
             >
               <View style={styles.quickActionIcon}>
                 <MaterialIcons
-                  name="play-arrow"
+                  name="self-improvement"
                   size={24}
                   color={colors.secondary}
                 />
               </View>
-              <Text style={styles.quickActionTitle}>Start Workout</Text>
-              <Text style={styles.quickActionSub}>Canned Routine #1</Text>
+              <Text style={styles.quickActionTitle}>Start Meditation</Text>
+              <Text style={styles.quickActionSub}>Guided Sessions</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.quickActionCard}
