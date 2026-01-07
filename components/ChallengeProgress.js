@@ -22,16 +22,16 @@ export const ChallengeProgress = ({
   // Calculate overall stats
   const totalChallenges = pillars.length;
   const activeChallenges = pillars.filter(
-    (id) => challengeStates[id]?.currentDay > 0
+    (id) => challengeStates[id]?.currentDay > 0,
   ).length;
   const completedChallenges = pillars.filter(
-    (id) => challengeStates[id]?.currentDay >= 30
+    (id) => challengeStates[id]?.currentDay >= 30,
   ).length;
 
   // Calculate total streak
   const totalStreak = pillars.reduce(
     (sum, id) => sum + (challengeStates[id]?.streakDays || 0),
-    0
+    0,
   );
 
   return (
@@ -61,7 +61,11 @@ export const ChallengeProgress = ({
         <View style={styles.overallCard}>
           <View style={styles.overallHeader}>
             <View style={styles.overallIconContainer}>
-              <MaterialIcons name="emoji-events" size={28} color={colors.warning} />
+              <MaterialIcons
+                name="emoji-events"
+                size={28}
+                color={colors.warning}
+              />
             </View>
             <View style={styles.overallInfo}>
               <Text style={styles.overallTitle}>Overall Progress</Text>
@@ -108,7 +112,7 @@ export const ChallengeProgress = ({
             // Get today's completion status
             const todayTasks = completedTasks[todayKey] || [];
             const availableTasks = challenge.tasks.filter(
-              (t) => t.unlockedDay <= currentDay
+              (t) => t.unlockedDay <= currentDay,
             );
             const todayComplete =
               availableTasks.length > 0 &&
@@ -226,9 +230,9 @@ export const ChallengeProgress = ({
           <View style={styles.infoContent}>
             <Text style={styles.infoTitle}>How Challenges Work</Text>
             <Text style={styles.infoText}>
-              Each pillar has a 30-day progressive challenge. Start with 1 task in
-              Week 1 and build up to 4 tasks by Week 4. Complete all daily tasks to
-              maintain your streak!
+              Each pillar has a 30-day progressive challenge. Start with 1 task
+              in Week 1 and build up to 4 tasks by Week 4. Complete all daily
+              tasks to maintain your streak!
             </Text>
           </View>
         </View>

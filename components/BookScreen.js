@@ -11,10 +11,18 @@ import { colors } from "../styles/theme";
 import { BOOK_CHAPTERS } from "../constants";
 import { BottomNav } from "./BottomNav";
 
-export const BookScreen = ({ onNavigate, onSelectChapter, readChapters = {} }) => {
+export const BookScreen = ({
+  onNavigate,
+  onSelectChapter,
+  readChapters = {},
+}) => {
   const totalReadTime = BOOK_CHAPTERS.reduce((sum, ch) => sum + ch.readTime, 0);
-  const chaptersRead = Object.keys(readChapters).filter(id => readChapters[id]).length;
-  const progressPercent = Math.round((chaptersRead / BOOK_CHAPTERS.length) * 100);
+  const chaptersRead = Object.keys(readChapters).filter(
+    (id) => readChapters[id],
+  ).length;
+  const progressPercent = Math.round(
+    (chaptersRead / BOOK_CHAPTERS.length) * 100,
+  );
 
   return (
     <View style={styles.container}>
@@ -37,18 +45,34 @@ export const BookScreen = ({ onNavigate, onSelectChapter, readChapters = {} }) =
         {/* Book Header */}
         <View style={styles.bookHeader}>
           <View style={styles.bookCover}>
-            <MaterialIcons name="auto-stories" size={48} color={colors.primary} />
+            <MaterialIcons
+              name="auto-stories"
+              size={48}
+              color={colors.primary}
+            />
           </View>
           <View style={styles.bookInfo}>
-            <Text style={styles.bookTitle}>Burnt Out and Ready to Feel Great</Text>
+            <Text style={styles.bookTitle}>
+              Burnt Out and Ready to Feel Great
+            </Text>
             <Text style={styles.bookAuthor}>by Al Cummings</Text>
             <View style={styles.bookStats}>
               <View style={styles.statItem}>
-                <MaterialIcons name="menu-book" size={14} color={colors.gray[400]} />
-                <Text style={styles.statText}>{BOOK_CHAPTERS.length} Chapters</Text>
+                <MaterialIcons
+                  name="menu-book"
+                  size={14}
+                  color={colors.gray[400]}
+                />
+                <Text style={styles.statText}>
+                  {BOOK_CHAPTERS.length} Chapters
+                </Text>
               </View>
               <View style={styles.statItem}>
-                <MaterialIcons name="schedule" size={14} color={colors.gray[400]} />
+                <MaterialIcons
+                  name="schedule"
+                  size={14}
+                  color={colors.gray[400]}
+                />
                 <Text style={styles.statText}>{totalReadTime} min read</Text>
               </View>
             </View>
@@ -62,7 +86,9 @@ export const BookScreen = ({ onNavigate, onSelectChapter, readChapters = {} }) =
             <Text style={styles.progressPercent}>{progressPercent}%</Text>
           </View>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+            <View
+              style={[styles.progressFill, { width: `${progressPercent}%` }]}
+            />
           </View>
           <Text style={styles.progressText}>
             {chaptersRead} of {BOOK_CHAPTERS.length} chapters completed
@@ -80,7 +106,12 @@ export const BookScreen = ({ onNavigate, onSelectChapter, readChapters = {} }) =
               onPress={() => onSelectChapter(chapter.id)}
               activeOpacity={0.7}
             >
-              <View style={[styles.chapterNumber, isRead && styles.chapterNumberRead]}>
+              <View
+                style={[
+                  styles.chapterNumber,
+                  isRead && styles.chapterNumberRead,
+                ]}
+              >
                 {isRead ? (
                   <MaterialIcons name="check" size={18} color={colors.black} />
                 ) : (
@@ -91,13 +122,25 @@ export const BookScreen = ({ onNavigate, onSelectChapter, readChapters = {} }) =
                 <Text style={styles.chapterTitle}>{chapter.title}</Text>
                 <Text style={styles.chapterSubtitle}>{chapter.subtitle}</Text>
                 <View style={styles.chapterMeta}>
-                  <MaterialIcons name={chapter.icon} size={12} color={colors.gray[500]} />
-                  <Text style={styles.chapterMetaText}>{chapter.readTime} min read</Text>
+                  <MaterialIcons
+                    name={chapter.icon}
+                    size={12}
+                    color={colors.gray[500]}
+                  />
+                  <Text style={styles.chapterMetaText}>
+                    {chapter.readTime} min read
+                  </Text>
                   <Text style={styles.chapterMetaDot}>•</Text>
-                  <Text style={styles.chapterMetaText}>{chapter.sections.length} sections</Text>
+                  <Text style={styles.chapterMetaText}>
+                    {chapter.sections.length} sections
+                  </Text>
                 </View>
               </View>
-              <MaterialIcons name="chevron-right" size={24} color={colors.gray[600]} />
+              <MaterialIcons
+                name="chevron-right"
+                size={24}
+                color={colors.gray[600]}
+              />
             </TouchableOpacity>
           );
         })}
@@ -114,7 +157,11 @@ export const BookScreen = ({ onNavigate, onSelectChapter, readChapters = {} }) =
             onPress={() => onNavigate("CHALLENGE_PROGRESS")}
           >
             <Text style={styles.ctaButtonText}>View Challenges</Text>
-            <MaterialIcons name="arrow-forward" size={16} color={colors.black} />
+            <MaterialIcons
+              name="arrow-forward"
+              size={16}
+              color={colors.black}
+            />
           </TouchableOpacity>
         </View>
       </ScrollView>

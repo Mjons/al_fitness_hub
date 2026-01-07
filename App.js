@@ -24,11 +24,12 @@ import { ChallengeProgress } from "./components/ChallengeProgress";
 import { ChallengeDetail } from "./components/ChallengeDetail";
 import { BookScreen } from "./components/BookScreen";
 import { ChapterView } from "./components/ChapterView";
+import { LandingPage } from "./components/LandingPage";
 import { colors } from "./styles/theme";
 import { THIRTY_DAY_CHALLENGES } from "./constants";
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState("WELCOME");
+  const [currentScreen, setCurrentScreen] = useState("LANDING");
   const [selectedWorkout, setSelectedWorkout] = useState(null);
 
   // Daily logging state
@@ -137,7 +138,7 @@ export default function App() {
     } catch (error) {
       console.log("Error clearing storage:", error);
     }
-    setCurrentScreen("WELCOME");
+    setCurrentScreen("LANDING");
     setSelectedWorkout(null);
     setIsLoggedToday(false);
     setStreak(0);
@@ -353,6 +354,12 @@ export default function App() {
 
   const renderScreen = () => {
     switch (currentScreen) {
+      case "LANDING":
+        return (
+          <LandingPage
+            onGetStarted={() => navigateTo("WELCOME")}
+          />
+        );
       case "WELCOME":
         return (
           <WelcomeScreen
@@ -505,9 +512,8 @@ export default function App() {
         );
       default:
         return (
-          <WelcomeScreen
-            onNext={() => navigateTo("INTAKE_PERSONAL")}
-            onRandomFill={handleRandomFill}
+          <LandingPage
+            onGetStarted={() => navigateTo("WELCOME")}
           />
         );
     }
