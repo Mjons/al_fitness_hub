@@ -38,7 +38,7 @@ Each pillar has a unique Day 21 capstone challenge - a special experience that c
 
 ## Triggered Messages & Content
 
-### Phase 1 Trigger (Day 1)
+### Phase 1 Trigger (Day 5)
 > **Encouragement Message**
 > Personalized message for each pillar celebrating the user's commitment to improving this area.
 > *Content: TBD*
@@ -48,12 +48,12 @@ Each pillar has a unique Day 21 capstone challenge - a special experience that c
 > Pre-recorded video from Coach Al with motivation and tips for the specific pillar.
 > *Content: TBD*
 
-### Phase 3 Trigger (Day 11)
+### Phase 3 Trigger (Day 15)
 > **15% Discount Coupon**
 > Exclusive discount on coaching packages or merchandise.
 > *Content: TBD*
 
-### Day 21 Trigger
+### Day 20 Trigger
 > **Completion Celebration + CTA**
 > - Congratulations message
 > - Unlock notification for free call + training session
