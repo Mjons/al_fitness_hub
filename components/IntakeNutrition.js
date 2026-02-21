@@ -17,17 +17,19 @@ export const IntakeNutrition = ({ onNext, onBack, initialData }) => {
   const [water, setWater] = useState(initialData?.water ?? 4);
 
   const calculateNutritionScore = () => {
-    let score = 0;
-    if (processedFreq === 'Rarely') score += 3;
-    else if (processedFreq === 'Sometimes') score += 1;
-    return Math.max(1, Math.min(10, score + 4));
+    if (processedFreq === 'Rarely') return 9;
+    if (processedFreq === 'Sometimes') return 6;
+    if (processedFreq === 'Often') return 3;
+    return 1;
   };
 
   const calculateHydrationScore = () => {
-    let score = 0;
-    if (water >= 8) score += 5;
-    else if (water >= 4) score += 2;
-    return Math.max(1, Math.min(10, score + 2));
+    if (water >= 10) return 10;
+    if (water >= 8) return 8;
+    if (water >= 6) return 5;
+    if (water >= 4) return 3;
+    if (water >= 2) return 2;
+    return 1;
   };
 
   const processedOptions = [

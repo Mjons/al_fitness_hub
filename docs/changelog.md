@@ -1,4 +1,53 @@
-# Session Log — Feb 22, 2026 (continued)
+# Session Log — Feb 22, 2026
+
+## 1. Data Persistence Layer + Firebase Cloud Sync
+
+**The big one.** Fixed the fundamentally broken data layer.
+
+### Created
+- `lib/firebase.js` — Firebase config (connected to `al-fitness-hub` project)
+- `lib/storage.js` — Local persistence with `@al_` keys, date-aware streaks, calendar-enforced challenges, migration from v1
+- `lib/sync.js` — Fire-and-forget Firestore writes for all user events
+- `docs/data-layer-setup.md` — Full setup documentation
+
+### Modified
+- `App.js` — Replaced all raw AsyncStorage with storage/sync modules. Added handlers for demographics, goals, pillar scores. Daily log is now idempotent + date-aware.
+- `IntakePersonal.js` — Now passes email upstream
+- `IntakeDemographics.js` — Now passes age/sex/weight/goalWeight upstream
+- `IntakeGoals.js` — Added injuries state, wired TextInput, passes all data upstream
+
+### Firebase Setup
+- Created Firebase project `al-fitness-hub`
+- Registered web app, got config keys
+- Created Firestore database
+- Deployed open security rules (MVP)
+
+---
+
+## 2. Bug Fix: Firebase Install (WSL/Windows)
+
+Firebase installed from WSL corrupted `package.json` inside `node_modules/firebase`. Reinstalled from Windows PowerShell to fix.
+
+Also removed `proto-loader-gen-types` symlink in `.bin` that caused EACCES permission error (gRPC CLI tool not needed at runtime).
+
+---
+
+## 3. Removed "Upgrade to Pro" from Dashboard
+
+Removed the `Upgrade to Pro` link and lock icons from the pillars section on the home page. Renamed section to "Other Pillars".
+
+---
+
+## 4. Landing Page — Responsive Pillars
+
+The 7 pillars grid used a fixed width from `Dimensions.get("window")` captured once at import. Didn't adapt on mobile.
+
+**Fix:**
+- Switched to `useWindowDimensions` (reactive)
+- Changed pillars from 2-column grid to vertical stack (each pillar = horizontal row with icon + text)
+- Made features grid responsive (1 col on narrow, 2 on wide)
+- Book section stacks vertically on very narrow screens
+
 
 ## 5. Light/Dark Mode Toggle
 
@@ -80,52 +129,37 @@ Steps 4 (Movement) and 6 (Breathing & Sleep) required scrolling to see all conte
 
 ---
 
-# Session Log — Feb 22, 2026
+## 10. Pillar Scoring Overhaul + Live Pillar Display
 
-## 1. Data Persistence Layer + Firebase Cloud Sync
+Redesigned all 7 pillar scoring formulas and wired real scores to the Pillars screen. Previously the Pillars screen showed hardcoded fake numbers — now it displays your actual onboarding answers.
 
-**The big one.** Fixed the fundamentally broken data layer.
+**What changed:**
+- Fixed a bug where the Mindfulness score was **inverted** (stressed users scored high, peaceful users scored low)
+- The "Do you practice mindfulness?" question was collected but never used — now it factors into the score
+- Widened scoring ranges for all pillars (most were stuck in a 3-point range like 4–7, now use the full 1–10 scale)
+- Pillars screen now shows dynamic scores, a real average balance, auto-detected weakest pillar hint, and status labels based on your actual score
+- Removed hardcoded scores/statuses from the PILLARS constant
+
+**Full scoring details:** See [`docs/pillar-scoring.md`](./pillar-scoring.md)
+
+**Files modified:** `IntakeMovement.js`, `IntakeNutrition.js`, `IntakeBreathingSleep.js`, `IntakeMindfulness.js`, `constants.js`, `PillarsOverview.js`, `App.js`
+
+---
+
+## 11. Firebase User Deletion Script
+
+Admin script to completely remove a user's data from Firestore by email address.
 
 ### Created
-- `lib/firebase.js` — Firebase config (connected to `al-fitness-hub` project)
-- `lib/storage.js` — Local persistence with `@al_` keys, date-aware streaks, calendar-enforced challenges, migration from v1
-- `lib/sync.js` — Fire-and-forget Firestore writes for all user events
-- `docs/data-layer-setup.md` — Full setup documentation
+- `scripts/delete-user.js` — Queries Firestore for user documents matching an email, shows matches with confirmation prompt, then deletes the user document and all subcollections (`dailyLogs`, `challengeProgress`, `challengeTasks`, `bookProgress`)
 
-### Modified
-- `App.js` — Replaced all raw AsyncStorage with storage/sync modules. Added handlers for demographics, goals, pillar scores. Daily log is now idempotent + date-aware.
-- `IntakePersonal.js` — Now passes email upstream
-- `IntakeDemographics.js` — Now passes age/sex/weight/goalWeight upstream
-- `IntakeGoals.js` — Added injuries state, wired TextInput, passes all data upstream
-
-### Firebase Setup
-- Created Firebase project `al-fitness-hub`
-- Registered web app, got config keys
-- Created Firestore database
-- Deployed open security rules (MVP)
+### Usage
+```bash
+node scripts/delete-user.js user@example.com
+```
 
 ---
 
-## 2. Bug Fix: Firebase Install (WSL/Windows)
+## 12. README
 
-Firebase installed from WSL corrupted `package.json` inside `node_modules/firebase`. Reinstalled from Windows PowerShell to fix.
-
-Also removed `proto-loader-gen-types` symlink in `.bin` that caused EACCES permission error (gRPC CLI tool not needed at runtime).
-
----
-
-## 3. Removed "Upgrade to Pro" from Dashboard
-
-Removed the `Upgrade to Pro` link and lock icons from the pillars section on the home page. Renamed section to "Other Pillars".
-
----
-
-## 4. Landing Page — Responsive Pillars
-
-The 7 pillars grid used a fixed width from `Dimensions.get("window")` captured once at import. Didn't adapt on mobile.
-
-**Fix:**
-- Switched to `useWindowDimensions` (reactive)
-- Changed pillars from 2-column grid to vertical stack (each pillar = horizontal row with icon + text)
-- Made features grid responsive (1 col on narrow, 2 on wide)
-- Book section stacks vertically on very narrow screens
+Added `README.md` to project root with project overview, setup/run instructions, and script usage documentation.

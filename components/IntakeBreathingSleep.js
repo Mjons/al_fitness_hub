@@ -30,10 +30,21 @@ export const IntakeBreathingSleep = ({ onNext, onBack, initialData }) => {
   };
 
   const calculateSleepScore = () => {
-    let score = 0;
-    if (!unsureSleep && sleepHours >= 7) score += 3;
-    if (!unsureEnergy && wakeEnergy >= 8) score += 3;
-    return Math.max(1, Math.min(10, score + 3));
+    let score = 1;
+    if (!unsureSleep) {
+      if (sleepHours >= 9) score += 4;
+      else if (sleepHours >= 8) score += 3;
+      else if (sleepHours >= 7) score += 2;
+      else if (sleepHours >= 6) score += 1;
+    } else { score += 2; }
+    if (!unsureEnergy) {
+      if (wakeEnergy >= 9) score += 5;
+      else if (wakeEnergy >= 7) score += 4;
+      else if (wakeEnergy >= 5) score += 3;
+      else if (wakeEnergy >= 3) score += 2;
+      else score += 1;
+    } else { score += 2; }
+    return Math.max(1, Math.min(10, score));
   };
 
   return (

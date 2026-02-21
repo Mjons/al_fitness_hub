@@ -25,12 +25,25 @@ export const IntakeMovement = ({ onNext, onBack, initialData }) => {
   const [unsureLevel, setUnsureLevel] = useState(initialData?.unsureLevel ?? false);
 
   const calculateScore = () => {
-    let score = 0;
-    if (!unsureSteps && steps >= 8000) score += 3;
-    if (!unsureFreq && freq >= 2) score += 2;
-    if (!unsureCardio && cardioFreq >= 2) score += 2;
-    if (!unsureLevel && level === 'High') score += 2;
-    return Math.max(1, Math.min(10, score + 1));
+    let score = 1;
+    if (!unsureSteps) {
+      if (steps >= 10000) score += 3;
+      else if (steps >= 7000) score += 2;
+      else if (steps >= 4000) score += 1;
+    }
+    if (!unsureFreq) {
+      if (freq >= 3) score += 2;
+      else if (freq >= 1) score += 1;
+    }
+    if (!unsureCardio) {
+      if (cardioFreq >= 3) score += 2;
+      else if (cardioFreq >= 1) score += 1;
+    }
+    if (!unsureLevel) {
+      if (level === 'High') score += 2;
+      else if (level === 'Medium') score += 1;
+    }
+    return Math.max(1, Math.min(10, score));
   };
 
   const getMovementData = () => ({

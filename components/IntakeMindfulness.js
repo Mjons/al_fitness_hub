@@ -23,19 +23,27 @@ export const IntakeMindfulness = ({ onNext, onBack, initialData }) => {
   const [unsureMindfulness, setUnsureMindfulness] = useState(initialData?.unsureMindfulness ?? false);
 
   const calculateMindfulnessScore = () => {
-    if (unsureStress) return 5;
-    let score = 0;
-    if (stress <= 3) score += 5;
-    else if (stress <= 6) score += 2;
-    return Math.max(1, Math.min(10, score + 3));
+    let score = 1;
+    if (!unsureStress) {
+      if (stress >= 9) score += 6;
+      else if (stress >= 7) score += 5;
+      else if (stress >= 5) score += 3;
+      else if (stress >= 3) score += 2;
+      else score += 1;
+    } else { score += 3; }
+    if (!unsureMindfulness) {
+      if (mindfulness === 'yes') score += 3;
+      else score += 1;
+    } else { score += 1; }
+    return Math.max(1, Math.min(10, score));
   };
 
   const calculateEnvironmentScore = () => {
     if (unsureOutdoors) return 5;
-    let score = 0;
-    if (outdoors >= 3) score += 5;
-    else if (outdoors >= 1) score += 2;
-    return Math.max(1, Math.min(10, score + 2));
+    if (outdoors >= 3) return 9;
+    if (outdoors >= 2) return 7;
+    if (outdoors >= 1) return 4;
+    return 1;
   };
 
   const outdoorOptions = [0, 1, 2, '3+'];

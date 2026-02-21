@@ -11,9 +11,32 @@ import { useTheme } from "../styles/ThemeContext";
 import { PILLARS } from "../constants";
 import { BottomNav } from "./BottomNav";
 
-export const PillarsOverview = ({ onNavigate }) => {
+const getStatusLabel = (score) => {
+  if (score <= 3) return "Needs Focus";
+  if (score <= 6) return "Building";
+  if (score <= 8) return "On Track";
+  return "Going Strong";
+};
+
+export const PillarsOverview = ({ onNavigate, pillarScores = {} }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const pillarsWithScores = PILLARS.map((p) => ({
+    ...p,
+    score: pillarScores[p.id] ?? 5,
+    status: getStatusLabel(pillarScores[p.id] ?? 5),
+  }));
+
+  const scores = Object.values(pillarScores);
+  const totalBalance = scores.length > 0
+    ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)
+    : "5.0";
+
+  const weakest = pillarsWithScores.reduce((prev, curr) =>
+    curr.score < prev.score ? curr : prev
+  );
+  const hintText = `Focus on ${weakest.name} to improve your overall balance.`;
 
   return (
     <View style={styles.container}>
@@ -42,12 +65,10 @@ export const PillarsOverview = ({ onNavigate }) => {
           <View style={styles.balanceContent}>
             <Text style={styles.balanceLabel}>Total Balance</Text>
             <View style={styles.balanceValue}>
-              <Text style={styles.balanceNumber}>6.5</Text>
+              <Text style={styles.balanceNumber}>{totalBalance}</Text>
               <Text style={styles.balanceMax}>/10</Text>
             </View>
-            <Text style={styles.balanceHint}>
-              Great start! Keep pushing on Nutrition.
-            </Text>
+            <Text style={styles.balanceHint}>{hintText}</Text>
           </View>
           <View style={styles.circleChart}>
             <View style={styles.circleInner}>
@@ -86,7 +107,7 @@ export const PillarsOverview = ({ onNavigate }) => {
         </TouchableOpacity>
 
         <View style={styles.pillarsList}>
-          {PILLARS.map((p, i) => (
+          {pillarsWithScores.map((p, i) => (
             <View key={i} style={styles.pillarCard}>
               <View style={styles.pillarHeader}>
                 <View style={styles.pillarLeft}>

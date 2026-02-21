@@ -377,13 +377,13 @@ export default function App() {
     const randomEmail = `${randomName.toLowerCase()}@test.com`;
 
     const randomScores = {
-      breathing: Math.floor(Math.random() * 8) + 2,
-      sleep: Math.floor(Math.random() * 8) + 2,
-      hydration: Math.floor(Math.random() * 8) + 2,
-      nutrition: Math.floor(Math.random() * 8) + 2,
-      movement: Math.floor(Math.random() * 8) + 2,
-      environment: Math.floor(Math.random() * 8) + 2,
-      mindfulness: Math.floor(Math.random() * 8) + 2,
+      breathing: Math.floor(Math.random() * 10) + 1,
+      sleep: Math.floor(Math.random() * 10) + 1,
+      hydration: Math.floor(Math.random() * 10) + 1,
+      nutrition: Math.floor(Math.random() * 10) + 1,
+      movement: Math.floor(Math.random() * 10) + 1,
+      environment: Math.floor(Math.random() * 10) + 1,
+      mindfulness: Math.floor(Math.random() * 10) + 1,
     };
 
     const entries = Object.entries(randomScores);
@@ -605,7 +605,7 @@ export default function App() {
           />
         );
       case "PILLARS_OVERVIEW":
-        return <PillarsOverview onNavigate={navigateTo} />;
+        return <PillarsOverview onNavigate={navigateTo} pillarScores={pillarScores} />;
       case "SUPPORT":
         return <SupportScreen onNavigate={navigateTo} />;
       case "BOOK":

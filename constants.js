@@ -67,62 +67,13 @@ export const WORKOUTS = [
 ];
 
 export const PILLARS = [
-  {
-    name: "Breathing",
-    id: "breathing",
-    score: 3,
-    target: 10,
-    icon: "air",
-    status: "Needs Focus",
-  },
-  {
-    name: "Sleep",
-    id: "sleep",
-    score: 4,
-    target: 10,
-    icon: "bedtime",
-    status: "Needs Focus",
-  },
-  {
-    name: "Hydration",
-    id: "hydration",
-    score: 5,
-    target: 10,
-    icon: "water-drop",
-    status: "Needs Focus",
-  },
-  {
-    name: "Nutrition",
-    id: "nutrition",
-    score: 8,
-    target: 10,
-    icon: "restaurant",
-    status: "On Track",
-  },
-  {
-    name: "Movement",
-    id: "movement",
-    score: 6,
-    target: 10,
-    icon: "directions-run",
-    status: "On Track",
-  },
-  {
-    name: "Environment",
-    id: "environment",
-    score: 8,
-    target: 10,
-    icon: "park",
-    status: "On Track",
-  },
-  {
-    name: "Mindfulness",
-    id: "mindfulness",
-    score: 7,
-    target: 10,
-    icon: "psychology",
-    status: "Going Strong",
-  },
+  { name: "Breathing", id: "breathing", icon: "air" },
+  { name: "Sleep", id: "sleep", icon: "bedtime" },
+  { name: "Hydration", id: "hydration", icon: "water-drop" },
+  { name: "Nutrition", id: "nutrition", icon: "restaurant" },
+  { name: "Movement", id: "movement", icon: "directions-run" },
+  { name: "Environment", id: "environment", icon: "park" },
+  { name: "Mindfulness", id: "mindfulness", icon: "psychology" },
 ];
 
 export const FAVORITE_MEALS = [
