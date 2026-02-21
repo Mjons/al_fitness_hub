@@ -9,14 +9,34 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../styles/ThemeContext';
 import { BottomNav } from './BottomNav';
+import { calculateNutritionTargets } from '../lib/nutrition';
 
-export const NutritionSummary = ({ onNavigate }) => {
+export const NutritionSummary = ({ onNavigate, weight, age, sex, goals, experience }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
+  const targets = useMemo(
+    () => calculateNutritionTargets({ weight, age, sex, goals, experience }),
+    [weight, age, sex, goals, experience],
+  );
+
+  const hasTargets = targets !== null;
+
   const stats = [
-    { label: 'Daily Calories', val: '2,100', unit: 'kcal target', icon: 'local-fire-department', prog: 65 },
-    { label: 'Daily Protein', val: '140g', unit: 'protein target', icon: 'fitness-center', prog: 40 },
+    {
+      label: 'Daily Calories',
+      val: hasTargets ? targets.calories.toLocaleString() : '--',
+      unit: 'kcal target',
+      icon: 'local-fire-department',
+      prog: 0,
+    },
+    {
+      label: 'Daily Protein',
+      val: hasTargets ? `${targets.protein}g` : '--',
+      unit: 'protein target',
+      icon: 'fitness-center',
+      prog: 0,
+    },
   ];
 
   return (
@@ -39,7 +59,9 @@ export const NutritionSummary = ({ onNavigate }) => {
       >
         <View style={styles.goalBadge}>
           <MaterialIcons name="verified" size={14} color={colors.primary} />
-          <Text style={styles.goalBadgeText}>Goal: Weight Loss</Text>
+          <Text style={styles.goalBadgeText}>
+            Goal: {hasTargets ? targets.goalLabel : 'Not Set'}
+          </Text>
         </View>
         <Text style={styles.pageTitle}>Your Daily Fuel</Text>
         <Text style={styles.pageSubtitle}>Here is your tailored plan for today.</Text>
@@ -58,6 +80,7 @@ export const NutritionSummary = ({ onNavigate }) => {
               <View style={styles.progressBar}>
                 <View style={[styles.progressFill, { width: `${s.prog}%` }]} />
               </View>
+              <Text style={styles.progressHint}>Log meals to track progress</Text>
             </View>
           ))}
         </View>
@@ -75,16 +98,34 @@ export const NutritionSummary = ({ onNavigate }) => {
             <View style={styles.pillarContent}>
               <Text style={styles.pillarTitle}>Fiber Focus</Text>
               <Text style={styles.pillarDesc}>
-                Aim for 15g of fiber per 1,000 calories to keep your gut happy and
+                Aim for 14g of fiber per 1,000 calories to keep your gut happy and
                 energy steady.
               </Text>
-              <Text style={styles.pillarTarget}>Target: 32g Today</Text>
+              <Text style={styles.pillarTarget}>
+                Target: {hasTargets ? `${targets.fiber}g Today` : '--'}
+              </Text>
             </View>
           </View>
 
           <View style={[styles.pillarCard, styles.pillarCardBlue]}>
             <View style={[styles.pillarIcon, styles.pillarIconBlue]}>
-              <MaterialIcons name="palette" size={24} color="#3b82f6" />
+              <MaterialIcons name="water-drop" size={24} color="#3b82f6" />
+            </View>
+            <View style={styles.pillarContent}>
+              <Text style={styles.pillarTitle}>Hydration</Text>
+              <Text style={styles.pillarDesc}>
+                Stay hydrated throughout the day. Drink water before meals to support
+                digestion and energy.
+              </Text>
+              <Text style={[styles.pillarTarget, { color: '#3b82f6' }]}>
+                Target: {hasTargets ? `${targets.waterCups} cups Today` : '--'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.pillarCard}>
+            <View style={styles.pillarIcon}>
+              <MaterialIcons name="palette" size={24} color={colors.primary} />
             </View>
             <View style={styles.pillarContent}>
               <Text style={styles.pillarTitle}>Eat the Rainbow</Text>
@@ -218,6 +259,12 @@ const makeStyles = (colors) => StyleSheet.create({
     height: '100%',
     backgroundColor: colors.primary,
     borderRadius: 3,
+  },
+  progressHint: {
+    fontSize: 9,
+    color: colors.gray[500],
+    marginTop: 6,
+    fontStyle: 'italic',
   },
   section: {
     marginBottom: 24,

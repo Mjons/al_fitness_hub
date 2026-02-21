@@ -163,3 +163,22 @@ node scripts/delete-user.js user@example.com
 ## 12. README
 
 Added `README.md` to project root with project overview, setup/run instructions, and script usage documentation.
+
+---
+
+## 13. Personalized Nutrition Targets
+
+The Nutrition and Quick Meal Log screens were static mockups — every number was hardcoded ("2,100 kcal", "140g protein", "Goal: Weight Loss", "Fueling your day, Sarah!"). Now they show real personalized targets calculated from the user's onboarding data.
+
+**How it works:** The app already collected weight, age, sex, goals, and experience during onboarding but `App.js` never loaded them back into state after a restart and never passed them to the nutrition screens. This change adds a calculation utility and wires everything together.
+
+### Created
+- `lib/nutrition.js` — Pure calculation utility using the Mifflin-St Jeor equation. Computes BMR → TDEE → calorie/protein/fiber/water targets based on the user's body stats, goals, and experience level. Handles goal priority (fat > muscle > maintenance), calorie floors (1,500M / 1,200F), and gracefully returns `null` when data is missing.
+- `docs/nutrition-targets.md` — Full documentation with formulas, worked examples, and a 5-profile comparison table
+
+### Modified
+- `App.js` — Added 6 new state variables (`userAge`, `userSex`, `userWeight`, `userGoalWeight`, `userGoals`, `userExperience`). Wired into `loadSavedData()` (restore on mount), `handleSaveDemographics()`, `handleSaveGoals()`, `handleRandomFill()`, `handleReset()`. Passes props to both nutrition screens.
+- `NutritionSummary.js` — Accepts new props, computes targets via `useMemo`, replaces hardcoded calories/protein/fiber/goal badge with real values. Added water target card. Progress bars show 0% with "Log meals to track progress" hint. Shows `--` when data is missing.
+- `NutritionLog.js` — Accepts new props, fixes hardcoded "Sarah!" greeting to use `userName`, replaces fake meal entries with empty state UI ("No meals logged yet"), Coach Al's tip now shows personalized calorie/protein/water targets.
+
+**Full calculation details:** See [`docs/nutrition-targets.md`](./nutrition-targets.md)

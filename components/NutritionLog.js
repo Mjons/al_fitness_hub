@@ -11,10 +11,18 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../styles/ThemeContext';
 import { FAVORITE_MEALS } from '../constants';
 import { BottomNav } from './BottomNav';
+import { calculateNutritionTargets } from '../lib/nutrition';
 
-export const NutritionLog = ({ onNavigate }) => {
+export const NutritionLog = ({ onNavigate, userName, weight, age, sex, goals, experience }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const targets = useMemo(
+    () => calculateNutritionTargets({ weight, age, sex, goals, experience }),
+    [weight, age, sex, goals, experience],
+  );
+
+  const hasTargets = targets !== null;
 
   const mealTypes = [
     { n: 'Breakfast', i: 'wb-sunny', c: '#f97316' },
@@ -23,10 +31,11 @@ export const NutritionLog = ({ onNavigate }) => {
     { n: 'Snack', i: 'local-dining', c: '#22c55e' },
   ];
 
-  const todaysMeals = [
-    { n: 'Oatmeal & Berries', t: 'Breakfast', kcal: 350, time: '08:30 AM' },
-    { n: 'Apple Slices', t: 'Snack', kcal: 95, time: '10:45 AM' },
-  ];
+  const todaysMeals = [];
+
+  const tipText = hasTargets
+    ? `Your daily targets: ${targets.calories.toLocaleString()} kcal, ${targets.protein}g protein, ${targets.waterCups} cups of water. Hydrate before meals!`
+    : 'Hydration is key! Remember to drink a glass of water 20 mins before your meal.';
 
   return (
     <View style={styles.container}>
@@ -46,16 +55,15 @@ export const NutritionLog = ({ onNavigate }) => {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>Fueling your day, Sarah!</Text>
+        <Text style={styles.pageTitle}>
+          Fueling your day, {userName || 'friend'}!
+        </Text>
 
         <View style={styles.tipCard}>
           <MaterialIcons name="tips-and-updates" size={20} color={colors.secondary} />
           <View style={styles.tipContent}>
             <Text style={styles.tipTitle}>Coach Al's Tip</Text>
-            <Text style={styles.tipText}>
-              Hydration is key! Remember to drink a glass of water 20 mins before
-              your meal.
-            </Text>
+            <Text style={styles.tipText}>{tipText}</Text>
           </View>
         </View>
 
@@ -100,24 +108,34 @@ export const NutritionLog = ({ onNavigate }) => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Today's Fuel</Text>
-          <View style={styles.timeline}>
-            {todaysMeals.map((item, i) => (
-              <View key={i} style={styles.timelineItem}>
-                <View style={styles.timelineDot} />
-                <View style={styles.timelineContent}>
-                  <View style={styles.timelineHeader}>
-                    <View>
-                      <Text style={styles.mealName}>{item.n}</Text>
-                      <Text style={styles.mealDetails}>
-                        {item.t} • {item.kcal} kcal
-                      </Text>
+          {todaysMeals.length === 0 ? (
+            <View style={styles.emptyState}>
+              <MaterialIcons name="restaurant-menu" size={40} color={colors.gray[500]} />
+              <Text style={styles.emptyTitle}>No meals logged yet</Text>
+              <Text style={styles.emptySubtitle}>
+                Tap a meal type above to start tracking your nutrition
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.timeline}>
+              {todaysMeals.map((item, i) => (
+                <View key={i} style={styles.timelineItem}>
+                  <View style={styles.timelineDot} />
+                  <View style={styles.timelineContent}>
+                    <View style={styles.timelineHeader}>
+                      <View>
+                        <Text style={styles.mealName}>{item.n}</Text>
+                        <Text style={styles.mealDetails}>
+                          {item.t} • {item.kcal} kcal
+                        </Text>
+                      </View>
+                      <Text style={styles.mealTime}>{item.time}</Text>
                     </View>
-                    <Text style={styles.mealTime}>{item.time}</Text>
                   </View>
                 </View>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -270,6 +288,23 @@ const makeStyles = (colors) => StyleSheet.create({
     fontSize: 10,
     color: colors.gray[500],
     marginTop: 2,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    gap: 8,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.gray[400],
+    marginTop: 8,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: colors.gray[500],
+    textAlign: 'center',
+    maxWidth: 240,
   },
   timeline: {
     paddingLeft: 16,

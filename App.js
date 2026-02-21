@@ -99,6 +99,12 @@ export default function App() {
   const [pillarScores, setPillarScores] = useState(DEFAULT_SCORES);
 
   const [userName, setUserName] = useState("");
+  const [userAge, setUserAge] = useState(null);
+  const [userSex, setUserSex] = useState(null);
+  const [userWeight, setUserWeight] = useState(null);
+  const [userGoalWeight, setUserGoalWeight] = useState(null);
+  const [userGoals, setUserGoals] = useState(null);
+  const [userExperience, setUserExperience] = useState(null);
   const [focusPillar, setFocusPillar] = useState("breathing");
 
   // 21-day challenge states
@@ -138,6 +144,12 @@ export default function App() {
       if (data.theme) setIsDark(data.theme === 'dark');
       if (data.screen) setCurrentScreen(data.screen);
       if (data.name) setUserName(data.name);
+      if (data.age) setUserAge(data.age);
+      if (data.sex) setUserSex(data.sex);
+      if (data.weight) setUserWeight(data.weight);
+      if (data.goalWeight) setUserGoalWeight(data.goalWeight);
+      if (data.goals) setUserGoals(data.goals);
+      if (data.experience) setUserExperience(data.experience);
       if (data.focusPillar) setFocusPillar(data.focusPillar);
       if (data.pillarScores) setPillarScores(data.pillarScores);
       if (data.challengeStates) setChallengeStates(data.challengeStates);
@@ -225,6 +237,10 @@ export default function App() {
 
   const handleSaveDemographics = async (demographics, formData) => {
     setIntakeData((prev) => ({ ...prev, demographics: formData || demographics }));
+    if (demographics.age) setUserAge(demographics.age);
+    if (demographics.sex) setUserSex(demographics.sex);
+    if (demographics.weight) setUserWeight(demographics.weight);
+    if (demographics.goalWeight) setUserGoalWeight(demographics.goalWeight);
     try {
       await saveDemographics(demographics);
 
@@ -239,6 +255,8 @@ export default function App() {
 
   const handleSaveGoals = async (goals, experience, injuries) => {
     setIntakeData((prev) => ({ ...prev, goals: { selectedGoals: goals, experience, injuries } }));
+    setUserGoals(goals);
+    setUserExperience(experience);
     try {
       await saveGoals(goals, experience, injuries);
 
@@ -398,15 +416,29 @@ export default function App() {
     setFocusPillar(weakest[0]);
     setStreak(randomStreak);
 
+    const randomAge = 25 + Math.floor(Math.random() * 30);
+    const randomSex = ["Male", "Female", "Other"][Math.floor(Math.random() * 3)];
+    const randomWeight = 140 + Math.floor(Math.random() * 80);
+    const randomGoalWeight = 130 + Math.floor(Math.random() * 60);
+    const randomGoals = ["fat", "energy"];
+    const randomExperience = ["beg", "int", "adv"][Math.floor(Math.random() * 3)];
+
+    setUserAge(randomAge);
+    setUserSex(randomSex);
+    setUserWeight(randomWeight);
+    setUserGoalWeight(randomGoalWeight);
+    setUserGoals(randomGoals);
+    setUserExperience(randomExperience);
+
     const fillData = {
       name: randomName,
       email: randomEmail,
-      age: 25 + Math.floor(Math.random() * 30),
-      sex: ["Male", "Female", "Other"][Math.floor(Math.random() * 3)],
-      weight: 140 + Math.floor(Math.random() * 80),
-      goalWeight: 130 + Math.floor(Math.random() * 60),
-      goals: ["fat", "energy"],
-      experience: ["beg", "int", "adv"][Math.floor(Math.random() * 3)],
+      age: randomAge,
+      sex: randomSex,
+      weight: randomWeight,
+      goalWeight: randomGoalWeight,
+      goals: randomGoals,
+      experience: randomExperience,
       injuries: "",
       pillarScores: randomScores,
       focusPillar: weakest[0],
@@ -449,6 +481,12 @@ export default function App() {
     setLogHistory({});
     setPillarScores(DEFAULT_SCORES);
     setUserName("");
+    setUserAge(null);
+    setUserSex(null);
+    setUserWeight(null);
+    setUserGoalWeight(null);
+    setUserGoals(null);
+    setUserExperience(null);
     setFocusPillar("breathing");
     setSelectedChallengePillar(null);
     setSelectedChapterId(null);
@@ -594,9 +632,28 @@ export default function App() {
           />
         );
       case "NUTRITION_LOG":
-        return <NutritionLog onNavigate={navigateTo} />;
+        return (
+          <NutritionLog
+            onNavigate={navigateTo}
+            userName={userName}
+            weight={userWeight}
+            age={userAge}
+            sex={userSex}
+            goals={userGoals}
+            experience={userExperience}
+          />
+        );
       case "NUTRITION_SUMMARY":
-        return <NutritionSummary onNavigate={navigateTo} />;
+        return (
+          <NutritionSummary
+            onNavigate={navigateTo}
+            weight={userWeight}
+            age={userAge}
+            sex={userSex}
+            goals={userGoals}
+            experience={userExperience}
+          />
+        );
       case "MEDITATION_LIST":
         return (
           <MeditationList
