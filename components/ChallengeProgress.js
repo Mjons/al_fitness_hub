@@ -16,7 +16,7 @@ export const ChallengeProgress = ({
   onSelectChallenge,
   onNavigate,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark, toggleTheme } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const pillars = Object.keys(TWENTY_ONE_DAY_CHALLENGES);
@@ -47,7 +47,9 @@ export const ChallengeProgress = ({
           <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>21-Day Challenges</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity style={styles.backButton} onPress={toggleTheme}>
+          <MaterialIcons name={isDark ? "light-mode" : "dark-mode"} size={24} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView

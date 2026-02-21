@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useTheme } from "../styles/ThemeContext";
 import {
@@ -29,8 +30,9 @@ export const ChallengeDetail = ({
   onNavigate,
   onSetDay,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark, toggleTheme } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const [codeCopied, setCodeCopied] = useState(false);
 
   const challenge = TWENTY_ONE_DAY_CHALLENGES[pillarId];
   if (!challenge) return null;
@@ -73,7 +75,9 @@ export const ChallengeDetail = ({
           <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{challenge.name} Challenge</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity style={styles.backButton} onPress={toggleTheme}>
+          <MaterialIcons name={isDark ? "light-mode" : "dark-mode"} size={24} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       {/* Dev Mode Controls */}
@@ -267,8 +271,28 @@ export const ChallengeDetail = ({
             <View style={styles.triggerContent}>
               <Text style={styles.triggerLabel}>15% Off Coaching!</Text>
               <Text style={styles.triggerText}>
-                Use code PILLAR15 for 15% off coaching packages. You've earned it!
+                Use code{' '}
+                <Text style={{ fontWeight: '800', color: colors.text }}>PILLAR15</Text>
+                {' '}for 15% off coaching packages. You've earned it!
               </Text>
+              <TouchableOpacity
+                style={[styles.copyButton, codeCopied && styles.copyButtonCopied]}
+                onPress={async () => {
+                  await Clipboard.setStringAsync('PILLAR15');
+                  setCodeCopied(true);
+                  setTimeout(() => setCodeCopied(false), 2000);
+                }}
+                activeOpacity={0.7}
+              >
+                <MaterialIcons
+                  name={codeCopied ? 'check' : 'content-copy'}
+                  size={14}
+                  color={codeCopied ? colors.primary : colors.text}
+                />
+                <Text style={[styles.copyButtonText, codeCopied && { color: colors.primary }]}>
+                  {codeCopied ? 'Copied!' : 'Copy Code'}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -695,6 +719,28 @@ const makeStyles = (colors) => StyleSheet.create({
     fontSize: 13,
     color: colors.gray[400],
     lineHeight: 18,
+  },
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    backgroundColor: colors.surface,
+  },
+  copyButtonCopied: {
+    borderColor: `${colors.primary}40`,
+    backgroundColor: `${colors.primary}10`,
+  },
+  copyButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.text,
   },
   completedBanner: {
     flexDirection: "row",

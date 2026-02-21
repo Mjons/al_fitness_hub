@@ -19,7 +19,7 @@ const getStatusLabel = (score) => {
 };
 
 export const PillarsOverview = ({ onNavigate, pillarScores = {} }) => {
-  const { colors } = useTheme();
+  const { colors, isDark, toggleTheme } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const pillarsWithScores = PILLARS.map((p) => ({
@@ -48,7 +48,9 @@ export const PillarsOverview = ({ onNavigate, pillarScores = {} }) => {
           <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pillars Overview</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity style={styles.backButton} onPress={toggleTheme}>
+          <MaterialIcons name={isDark ? "light-mode" : "dark-mode"} size={24} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView

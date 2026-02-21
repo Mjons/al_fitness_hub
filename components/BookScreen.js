@@ -16,7 +16,7 @@ export const BookScreen = ({
   onSelectChapter,
   readChapters = {},
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark, toggleTheme } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const totalReadTime = BOOK_CHAPTERS.reduce((sum, ch) => sum + ch.readTime, 0);
@@ -37,7 +37,9 @@ export const BookScreen = ({
           <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>The Book</Text>
-        <View style={styles.placeholder} />
+        <TouchableOpacity style={styles.backButton} onPress={toggleTheme}>
+          <MaterialIcons name={isDark ? "light-mode" : "dark-mode"} size={24} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView

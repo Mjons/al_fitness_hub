@@ -11,7 +11,7 @@ import { useTheme } from "../styles/ThemeContext";
 import { BOOK_CHAPTERS } from "../constants";
 
 export const ChapterView = ({ chapterId, onNavigate, onMarkRead, isRead }) => {
-  const { colors } = useTheme();
+  const { colors, isDark, toggleTheme } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const scrollRef = useRef(null);
@@ -81,16 +81,21 @@ export const ChapterView = ({ chapterId, onNavigate, onMarkRead, isRead }) => {
             {chapter.title}
           </Text>
         </View>
-        <TouchableOpacity
-          style={[styles.bookmarkButton, isRead && styles.bookmarkButtonActive]}
-          onPress={() => onMarkRead(chapterId, !isRead)}
-        >
-          <MaterialIcons
-            name={isRead ? "check-circle" : "check-circle-outline"}
-            size={24}
-            color={isRead ? colors.primary : colors.gray[500]}
-          />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <TouchableOpacity style={styles.bookmarkButton} onPress={toggleTheme}>
+            <MaterialIcons name={isDark ? "light-mode" : "dark-mode"} size={22} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.bookmarkButton, isRead && styles.bookmarkButtonActive]}
+            onPress={() => onMarkRead(chapterId, !isRead)}
+          >
+            <MaterialIcons
+              name={isRead ? "check-circle" : "check-circle-outline"}
+              size={24}
+              color={isRead ? colors.primary : colors.gray[500]}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Content */}

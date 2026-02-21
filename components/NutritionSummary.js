@@ -12,7 +12,7 @@ import { BottomNav } from './BottomNav';
 import { calculateNutritionTargets } from '../lib/nutrition';
 
 export const NutritionSummary = ({ onNavigate, weight, age, sex, goals, experience }) => {
-  const { colors } = useTheme();
+  const { colors, isDark, toggleTheme } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const targets = useMemo(
@@ -49,7 +49,9 @@ export const NutritionSummary = ({ onNavigate, weight, age, sex, goals, experien
           <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Nutrition</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity style={styles.backButton} onPress={toggleTheme}>
+          <MaterialIcons name={isDark ? 'light-mode' : 'dark-mode'} size={24} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -77,10 +79,12 @@ export const NutritionSummary = ({ onNavigate, weight, age, sex, goals, experien
               </View>
               <Text style={styles.statValue}>{s.val}</Text>
               <Text style={styles.statUnit}>{s.unit}</Text>
+              {/* Progress bar + hint commented out — meal logging not yet implemented
               <View style={styles.progressBar}>
                 <View style={[styles.progressFill, { width: `${s.prog}%` }]} />
               </View>
               <Text style={styles.progressHint}>Log meals to track progress</Text>
+              */}
             </View>
           ))}
         </View>

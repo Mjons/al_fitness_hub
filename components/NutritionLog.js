@@ -14,7 +14,7 @@ import { BottomNav } from './BottomNav';
 import { calculateNutritionTargets } from '../lib/nutrition';
 
 export const NutritionLog = ({ onNavigate, userName, weight, age, sex, goals, experience }) => {
-  const { colors } = useTheme();
+  const { colors, isDark, toggleTheme } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const targets = useMemo(
@@ -47,7 +47,9 @@ export const NutritionLog = ({ onNavigate, userName, weight, age, sex, goals, ex
           <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Quick Meal Log</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity style={styles.backButton} onPress={toggleTheme}>
+          <MaterialIcons name={isDark ? 'light-mode' : 'dark-mode'} size={24} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView

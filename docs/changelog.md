@@ -182,3 +182,50 @@ The Nutrition and Quick Meal Log screens were static mockups — every number wa
 - `NutritionLog.js` — Accepts new props, fixes hardcoded "Sarah!" greeting to use `userName`, replaces fake meal entries with empty state UI ("No meals logged yet"), Coach Al's tip now shows personalized calorie/protein/water targets.
 
 **Full calculation details:** See [`docs/nutrition-targets.md`](./nutrition-targets.md)
+
+---
+
+## 14. Discount Code Copy Button
+
+The 15% off coaching discount code (`PILLAR15`) shown on challenge days 15–20 was plain text with no way to copy it. Added a copy-to-clipboard button.
+
+### What changed
+- `ChallengeDetail.js` — The code text is now bolded inline. Below it, a "Copy Code" button copies `PILLAR15` to the clipboard on tap, then shows a green checkmark + "Copied!" for 2 seconds before resetting.
+
+### Added dependency
+- `expo-clipboard` — Expo's cross-platform clipboard API (iOS, Android, Web)
+
+---
+
+## 15. Light/Dark Toggle on All Remaining Screens
+
+Extended the theme toggle to every screen that was still missing it. The sun/moon icon now appears in the top-right header slot on all screens.
+
+### Modified
+- `MeditationList.js`, `BookScreen.js`, `ChallengeProgress.js`, `ChallengeDetail.js` — First batch: replaced empty `width: 40` spacer with theme toggle
+- `NutritionSummary.js`, `NutritionLog.js`, `SupportScreen.js`, `PillarsOverview.js` — Second batch: same treatment
+- `ChapterView.js` — Added toggle alongside the existing bookmark button in the header
+
+---
+
+## 16. Fix: Missing Bottom Navigation on Meditate Screen
+
+The Meditate screen (`MeditationList.js`) never imported or rendered `BottomNav`, so the tab bar disappeared when navigating there.
+
+**Fix:** Added `BottomNav` import and rendered it with `currentScreen="MEDITATION_LIST"`. Added `paddingBottom: 120` to content so it scrolls clear of the nav bar. The Meditate tab highlights correctly since it was already defined in `BottomNav.js`.
+
+---
+
+## 17. Nutrition: Commented Out Fake Progress Tracking
+
+The Nutrition Summary stat cards (Daily Calories, Daily Protein) showed a progress bar stuck at 0% and a "Log meals to track progress" hint — but meal logging isn't implemented, so this was misleading.
+
+**Fix:** Commented out the `progressBar`, `progressFill`, and `progressHint` elements in `NutritionSummary.js`. The stat cards now show targets only without implying tracking exists.
+
+---
+
+## 18. Meditation: "Coming Soon" Modal
+
+Tapping any meditation card (Breath Awareness, Present Moment, Grounding & Space) previously tried to navigate to a meditation player that doesn't exist yet.
+
+**Fix:** Added a "Coming Soon" modal in `MeditationList.js`. Tapping any card now shows a centered modal with a meditation icon, "Coming Soon" title, message about sessions being crafted by Coach Al, and a "Got It" dismiss button. Cards no longer call `onSelectMeditation`.
