@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,39 +7,42 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors } from '../styles/theme';
-
-const MEDITATIONS = [
-  {
-    id: 'breathing',
-    title: 'Breath Awareness',
-    pillar: 'Breathing',
-    duration: '5-7 min',
-    description: 'Activate your parasympathetic nervous system through conscious breathing and box breathing technique.',
-    icon: 'air',
-    color: colors.info,
-  },
-  {
-    id: 'mindfulness',
-    title: 'Present Moment',
-    pillar: 'Mindfulness',
-    duration: '7-10 min',
-    description: 'Cultivate non-judgmental awareness through a guided body scan and present moment practice.',
-    icon: 'psychology',
-    color: colors.primary,
-  },
-  {
-    id: 'grounding',
-    title: 'Grounding & Space',
-    pillar: 'Environment',
-    duration: '5-7 min',
-    description: 'Connect with your physical environment and create internal space through visualization.',
-    icon: 'park',
-    color: colors.success,
-  },
-];
+import { useTheme } from '../styles/ThemeContext';
 
 export const MeditationList = ({ onNavigate, onSelectMeditation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const MEDITATIONS = [
+    {
+      id: 'breathing',
+      title: 'Breath Awareness',
+      pillar: 'Breathing',
+      duration: '5-7 min',
+      description: 'Activate your parasympathetic nervous system through conscious breathing and box breathing technique.',
+      icon: 'air',
+      color: colors.info,
+    },
+    {
+      id: 'mindfulness',
+      title: 'Present Moment',
+      pillar: 'Mindfulness',
+      duration: '7-10 min',
+      description: 'Cultivate non-judgmental awareness through a guided body scan and present moment practice.',
+      icon: 'psychology',
+      color: colors.primary,
+    },
+    {
+      id: 'grounding',
+      title: 'Grounding & Space',
+      pillar: 'Environment',
+      duration: '5-7 min',
+      description: 'Connect with your physical environment and create internal space through visualization.',
+      icon: 'park',
+      color: colors.success,
+    },
+  ];
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -47,7 +50,7 @@ export const MeditationList = ({ onNavigate, onSelectMeditation }) => {
           style={styles.backButton}
           onPress={() => onNavigate('DASHBOARD')}
         >
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Guided Meditations</Text>
         <View style={{ width: 40 }} />
@@ -112,10 +115,10 @@ export const MeditationList = ({ onNavigate, onSelectMeditation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -123,7 +126,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: colors.divider,
   },
   backButton: {
     width: 40,
@@ -135,7 +138,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
   },
   content: {
     flex: 1,
@@ -159,7 +162,7 @@ const styles = StyleSheet.create({
   introTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
     marginBottom: 8,
   },
   introText: {
@@ -174,11 +177,11 @@ const styles = StyleSheet.create({
   meditationCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.divider,
   },
   meditationIconContainer: {
     width: 56,
@@ -200,7 +203,7 @@ const styles = StyleSheet.create({
   meditationTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
   },
   durationBadge: {
     flexDirection: 'row',

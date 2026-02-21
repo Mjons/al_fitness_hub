@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,16 +8,19 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
-import { colors } from '../styles/theme';
+import { useTheme } from '../styles/ThemeContext';
 
-export const IntakeBreathingSleep = ({ onNext, onBack }) => {
-  const [noseBreather, setNoseBreather] = useState(null);
-  const [sleepHours, setSleepHours] = useState(7);
-  const [wakeEnergy, setWakeEnergy] = useState(5);
+export const IntakeBreathingSleep = ({ onNext, onBack, initialData }) => {
+  const { colors, isDark, toggleTheme } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  const [unsureBreathing, setUnsureBreathing] = useState(false);
-  const [unsureSleep, setUnsureSleep] = useState(false);
-  const [unsureEnergy, setUnsureEnergy] = useState(false);
+  const [noseBreather, setNoseBreather] = useState(initialData?.noseBreather ?? null);
+  const [sleepHours, setSleepHours] = useState(initialData?.sleepHours ?? 7);
+  const [wakeEnergy, setWakeEnergy] = useState(initialData?.wakeEnergy ?? 5);
+
+  const [unsureBreathing, setUnsureBreathing] = useState(initialData?.unsureBreathing ?? false);
+  const [unsureSleep, setUnsureSleep] = useState(initialData?.unsureSleep ?? false);
+  const [unsureEnergy, setUnsureEnergy] = useState(initialData?.unsureEnergy ?? false);
 
   const calculateBreathingScore = () => {
     if (unsureBreathing) return 5;
@@ -37,10 +40,12 @@ export const IntakeBreathingSleep = ({ onNext, onBack }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.stepText}>Step 6 of 7</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
+          <MaterialIcons name={isDark ? "light-mode" : "dark-mode"} size={20} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.progressContainer}>
@@ -177,7 +182,7 @@ export const IntakeBreathingSleep = ({ onNext, onBack }) => {
           style={[styles.button, (!unsureBreathing && noseBreather === null) && styles.buttonDisabled]}
           onPress={() =>
             (unsureBreathing || noseBreather !== null) &&
-            onNext(calculateBreathingScore(), calculateSleepScore())
+            onNext(calculateBreathingScore(), calculateSleepScore(), { noseBreather, sleepHours, wakeEnergy, unsureBreathing, unsureSleep, unsureEnergy })
           }
           disabled={!unsureBreathing && noseBreather === null}
           activeOpacity={0.8}
@@ -193,7 +198,7 @@ export const IntakeBreathingSleep = ({ onNext, onBack }) => {
           <MaterialIcons
             name="arrow-forward"
             size={20}
-            color={(unsureBreathing || noseBreather !== null) ? colors.black : colors.gray[600]}
+            color={(unsureBreathing || noseBreather !== null) ? colors.textInverse : colors.gray[600]}
           />
         </TouchableOpacity>
       </View>
@@ -201,10 +206,10 @@ export const IntakeBreathingSleep = ({ onNext, onBack }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -213,6 +218,13 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeToggle: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -232,7 +244,7 @@ const styles = StyleSheet.create({
   },
   progressBg: {
     height: 6,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.overlay,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -246,13 +258,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   titleSection: {
-    marginBottom: 32,
-    marginTop: 16,
+    marginBottom: 20,
+    marginTop: 8,
   },
   title: {
     fontSize: 28,
     fontWeight: '900',
-    color: colors.white,
+    color: colors.text,
   },
   subtitle: {
     fontSize: 16,
@@ -260,13 +272,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   section: {
-    marginBottom: 40,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   sectionLabel: {
     fontSize: 12,
@@ -307,7 +319,7 @@ const styles = StyleSheet.create({
   optionButton: {
     flex: 1,
     paddingVertical: 16,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -326,22 +338,22 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   sliderCard: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 16,
-    padding: 24,
+    padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.divider,
     alignItems: 'center',
   },
   sliderValue: {
-    fontSize: 40,
+    fontSize: 32,
     fontWeight: '900',
     color: colors.primary,
   },
   slider: {
     width: '100%',
     height: 40,
-    marginTop: 16,
+    marginTop: 8,
   },
   sliderLabels: {
     flexDirection: 'row',
@@ -374,7 +386,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     fontWeight: '900',
-    color: colors.black,
+    color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 2,
   },

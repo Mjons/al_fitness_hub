@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors } from '../styles/theme';
+import { useTheme } from '../styles/ThemeContext';
 
 export const BottomNav = ({ currentScreen, onNavigate }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const tabs = [
     { screen: 'DASHBOARD', icon: 'home', label: 'Home' },
     { screen: 'MEDITATION_LIST', icon: 'self-improvement', label: 'Meditate' },
     { screen: 'PILLARS_OVERVIEW', icon: 'pie-chart', label: 'Pillars' },
     { screen: 'NUTRITION_SUMMARY', icon: 'restaurant', label: 'Nutrition' },
-    { screen: 'PROGRESS_SUMMARY', icon: 'bar-chart', label: 'Progress' },
+    { screen: 'SUPPORT', icon: 'info', label: 'Support' },
   ];
 
   return (
@@ -41,27 +44,28 @@ export const BottomNav = ({ currentScreen, onNavigate }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundDark,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.05)',
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 24,
-  },
-  tab: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  label: {
-    fontSize: 10,
-    fontWeight: '500',
-  },
-  labelActive: {
-    fontWeight: '700',
-  },
-});
+const makeStyles = (colors) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      borderTopWidth: 1,
+      borderTopColor: colors.divider,
+      paddingHorizontal: 24,
+      paddingTop: 12,
+      paddingBottom: 24,
+    },
+    tab: {
+      alignItems: 'center',
+      gap: 4,
+    },
+    label: {
+      fontSize: 10,
+      fontWeight: '500',
+    },
+    labelActive: {
+      fontWeight: '700',
+    },
+  });

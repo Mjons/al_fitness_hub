@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,13 +8,16 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors } from '../styles/theme';
+import { useTheme } from '../styles/ThemeContext';
 
-export const IntakeDemographics = ({ onNext, onBack }) => {
-  const [sex, setSex] = useState(null);
-  const [age, setAge] = useState('');
-  const [weight, setWeight] = useState('');
-  const [goalWeight, setGoalWeight] = useState('');
+export const IntakeDemographics = ({ onNext, onBack, initialData }) => {
+  const { colors, isDark, toggleTheme } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const [sex, setSex] = useState(initialData?.sex ?? null);
+  const [age, setAge] = useState(initialData?.age ?? '');
+  const [weight, setWeight] = useState(initialData?.weight ?? '');
+  const [goalWeight, setGoalWeight] = useState(initialData?.goalWeight ?? '');
 
   const sexOptions = ['Male', 'Female', 'Other'];
 
@@ -22,10 +25,12 @@ export const IntakeDemographics = ({ onNext, onBack }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.stepText}>Step 2 of 7</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
+          <MaterialIcons name={isDark ? "light-mode" : "dark-mode"} size={20} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.progressContainer}>
@@ -116,21 +121,21 @@ export const IntakeDemographics = ({ onNext, onBack }) => {
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.button}
-          onPress={onNext}
+          onPress={() => onNext({ age: parseInt(age) || null, sex, weight: parseInt(weight) || null, goalWeight: parseInt(goalWeight) || null }, { age, sex, weight, goalWeight })}
           activeOpacity={0.8}
         >
           <Text style={styles.buttonText}>Continue</Text>
-          <MaterialIcons name="arrow-forward" size={20} color={colors.black} />
+          <MaterialIcons name="arrow-forward" size={20} color={colors.textInverse} />
         </TouchableOpacity>
       </View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -139,6 +144,13 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeToggle: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -158,7 +170,7 @@ const styles = StyleSheet.create({
   },
   progressBg: {
     height: 6,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.overlay,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -177,7 +189,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '900',
-    color: colors.white,
+    color: colors.text,
     lineHeight: 38,
   },
   subtitle: {
@@ -203,13 +215,13 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   input: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 16,
     fontSize: 16,
     fontWeight: '500',
-    color: colors.white,
+    color: colors.text,
   },
   selectContainer: {
     flexDirection: 'row',
@@ -218,7 +230,7 @@ const styles = StyleSheet.create({
   selectOption: {
     flex: 1,
     paddingVertical: 12,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 8,
     alignItems: 'center',
   },
@@ -268,7 +280,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     fontWeight: '900',
-    color: colors.black,
+    color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 2,
   },

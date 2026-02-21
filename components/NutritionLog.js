@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,14 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors } from '../styles/theme';
+import { useTheme } from '../styles/ThemeContext';
 import { FAVORITE_MEALS } from '../constants';
 import { BottomNav } from './BottomNav';
 
 export const NutritionLog = ({ onNavigate }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const mealTypes = [
     { n: 'Breakfast', i: 'wb-sunny', c: '#f97316' },
     { n: 'Lunch', i: 'restaurant', c: '#3b82f6' },
@@ -32,7 +35,7 @@ export const NutritionLog = ({ onNavigate }) => {
           style={styles.backButton}
           onPress={() => onNavigate('DASHBOARD')}
         >
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Quick Meal Log</Text>
         <View style={{ width: 40 }} />
@@ -123,10 +126,10 @@ export const NutritionLog = ({ onNavigate }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -134,7 +137,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: colors.divider,
   },
   backButton: {
     width: 40,
@@ -146,7 +149,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
   },
   content: {
     flex: 1,
@@ -158,7 +161,7 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: colors.white,
+    color: colors.text,
     marginBottom: 24,
   },
   tipCard: {
@@ -197,7 +200,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
     marginBottom: 16,
   },
   seeAllLink: {
@@ -212,10 +215,10 @@ const styles = StyleSheet.create({
   },
   mealTypeCard: {
     width: '48%',
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.divider,
     padding: 16,
     gap: 12,
   },
@@ -229,14 +232,14 @@ const styles = StyleSheet.create({
   mealTypeName: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
   },
   favoriteMealCard: {
     width: 160,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.divider,
     overflow: 'hidden',
     marginRight: 16,
   },
@@ -261,7 +264,7 @@ const styles = StyleSheet.create({
   favoriteMealName: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
   },
   favoriteMealKcal: {
     fontSize: 10,
@@ -271,7 +274,7 @@ const styles = StyleSheet.create({
   timeline: {
     paddingLeft: 16,
     borderLeftWidth: 2,
-    borderLeftColor: 'rgba(255,255,255,0.05)',
+    borderLeftColor: colors.divider,
     marginLeft: 8,
   },
   timelineItem: {
@@ -287,7 +290,7 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
     borderWidth: 2,
     borderColor: colors.primary,
   },
@@ -302,7 +305,7 @@ const styles = StyleSheet.create({
   mealName: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
   },
   mealDetails: {
     fontSize: 12,

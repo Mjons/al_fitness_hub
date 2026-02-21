@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,14 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors } from '../styles/theme';
+import { useTheme } from '../styles/ThemeContext';
 import { WORKOUTS } from '../constants';
 import { BottomNav } from './BottomNav';
 
 export const WorkoutList = ({ onNavigate, onSelectWorkout }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const categories = ['All', 'Mobility', 'Strength', 'Cardio', 'Postnatal'];
 
   return (
@@ -116,10 +119,10 @@ export const WorkoutList = ({ onNavigate, onSelectWorkout }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -127,12 +130,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: colors.divider,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
   },
   filterButton: {
     flexDirection: 'row',
@@ -156,7 +159,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 48,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingHorizontal: 16,
     gap: 8,
@@ -165,7 +168,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: colors.white,
+    color: colors.text,
   },
   categoriesScroll: {
     marginBottom: 24,
@@ -174,7 +177,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
@@ -193,16 +196,16 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
     marginBottom: 16,
   },
   workoutCard: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.divider,
   },
   workoutImage: {
     width: '100%',
@@ -236,7 +239,7 @@ const styles = StyleSheet.create({
   workoutTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
     marginBottom: 12,
   },
   workoutMeta: {

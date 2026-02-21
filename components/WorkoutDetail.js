@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,13 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors } from '../styles/theme';
+import { useTheme } from '../styles/ThemeContext';
 import { BottomNav } from './BottomNav';
 
 export const WorkoutDetail = ({ workout, onBack, onNavigate }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   if (!workout) return null;
 
   const exercises = [
@@ -24,13 +27,13 @@ export const WorkoutDetail = ({ workout, onBack, onNavigate }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {workout.title}
         </Text>
         <TouchableOpacity style={styles.bookmarkButton}>
-          <MaterialIcons name="bookmark-border" size={24} color={colors.white} />
+          <MaterialIcons name="bookmark-border" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
 
@@ -107,10 +110,10 @@ export const WorkoutDetail = ({ workout, onBack, onNavigate }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -129,7 +132,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
     textAlign: 'center',
     paddingHorizontal: 16,
   },
@@ -168,10 +171,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 32,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: colors.overlay,
     paddingHorizontal: 12,
     marginRight: 12,
     gap: 8,
@@ -179,11 +182,11 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
   },
   coachNote: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     borderLeftWidth: 4,
@@ -203,7 +206,7 @@ const styles = StyleSheet.create({
   coachTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
     marginBottom: 4,
   },
   coachMessage: {
@@ -224,7 +227,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
   },
   sectionCount: {
     fontSize: 12,
@@ -235,7 +238,7 @@ const styles = StyleSheet.create({
   exerciseCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
@@ -252,7 +255,7 @@ const styles = StyleSheet.create({
   exerciseName: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
     marginBottom: 4,
   },
   exerciseReps: {

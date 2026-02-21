@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { SafeAreaView, StatusBar } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { IntakePersonal } from "./components/IntakePersonal";
@@ -16,17 +15,74 @@ import { WorkoutList } from "./components/WorkoutList";
 import { WorkoutDetail } from "./components/WorkoutDetail";
 import { NutritionLog } from "./components/NutritionLog";
 import { NutritionSummary } from "./components/NutritionSummary";
-import { ProgressSummary } from "./components/ProgressSummary";
 import { PillarsOverview } from "./components/PillarsOverview";
-import { SettingsScreen } from "./components/SettingsScreen";
+import { SupportScreen } from "./components/SupportScreen";
 import { ChallengeProgress } from "./components/ChallengeProgress";
 import { ChallengeDetail } from "./components/ChallengeDetail";
 import { BookScreen } from "./components/BookScreen";
 import { ChapterView } from "./components/ChapterView";
 import { LandingPage } from "./components/LandingPage";
 import { MeditationList } from "./components/MeditationList";
-import { colors } from "./styles/theme";
-import { THIRTY_DAY_CHALLENGES } from "./constants";
+import { darkColors, lightColors } from "./styles/theme";
+import { ThemeProvider } from "./styles/ThemeContext";
+import { TWENTY_ONE_DAY_CHALLENGES } from "./constants";
+
+import {
+  migrateIfNeeded,
+  getOrCreateUserId,
+  loadAllData,
+  evaluateDailyLogOnLoad,
+  logToday,
+  saveScreen,
+  saveName,
+  saveEmail,
+  saveDemographics,
+  saveGoals,
+  savePillarScores,
+  saveFocusPillar,
+  saveIntakeCompleted,
+  saveChallengeStates,
+  saveReadChapters,
+  advanceChallengeDay,
+  clearAllData,
+  saveAllData,
+  saveTheme,
+} from "./lib/storage";
+
+import {
+  syncUserProfile,
+  syncPillarScores as syncPillarScoresCloud,
+  syncDailyLog,
+  syncChallengeProgress,
+  syncChallengeTasks,
+  syncBookProgress,
+  syncAllData as syncAllDataCloud,
+} from "./lib/sync";
+
+const DEFAULT_SCORES = {
+  breathing: 5,
+  sleep: 5,
+  hydration: 5,
+  nutrition: 5,
+  movement: 5,
+  environment: 5,
+  mindfulness: 5,
+};
+
+function buildInitialChallengeStates() {
+  const initial = {};
+  Object.keys(TWENTY_ONE_DAY_CHALLENGES).forEach((pillarId) => {
+    initial[pillarId] = {
+      currentDay: 1,
+      completedTasks: {},
+      streakDays: 0,
+      completedDays: 0,
+      lastCompletionDate: null,
+      startDate: null,
+    };
+  });
+  return initial;
+}
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState("LANDING");
@@ -35,40 +91,34 @@ export default function App() {
   // Daily logging state
   const [isLoggedToday, setIsLoggedToday] = useState(false);
   const [streak, setStreak] = useState(0);
+  const [totalDaysLogged, setTotalDaysLogged] = useState(0);
+  const [lastLogDate, setLastLogDate] = useState(null);
+  const [logHistory, setLogHistory] = useState({});
 
   // Scoring state
-  const [pillarScores, setPillarScores] = useState({
-    breathing: 5,
-    sleep: 5,
-    hydration: 5,
-    nutrition: 5,
-    movement: 5,
-    environment: 5,
-    mindfulness: 5,
-  });
+  const [pillarScores, setPillarScores] = useState(DEFAULT_SCORES);
 
-  const [userName, setUserName] = useState("Sarah");
+  const [userName, setUserName] = useState("");
   const [focusPillar, setFocusPillar] = useState("breathing");
 
-  // 30-day challenge states
+  // 21-day challenge states
   const [selectedChallengePillar, setSelectedChallengePillar] = useState(null);
 
   // Book reading states
   const [selectedChapterId, setSelectedChapterId] = useState(null);
   const [readChapters, setReadChapters] = useState({});
-  const [challengeStates, setChallengeStates] = useState(() => {
-    // Initialize challenge state for each pillar
-    const initial = {};
-    Object.keys(THIRTY_DAY_CHALLENGES).forEach((pillarId) => {
-      initial[pillarId] = {
-        currentDay: 1,
-        completedTasks: {},
-        streakDays: 0,
-        startDate: null,
-      };
-    });
-    return initial;
-  });
+  const [challengeStates, setChallengeStates] = useState(
+    buildInitialChallengeStates,
+  );
+
+  // Intake form data (persisted across back navigation)
+  const [intakeData, setIntakeData] = useState({});
+
+  // Theme state
+  const [isDark, setIsDark] = useState(true);
+
+  // User ID ref (stable across renders, doesn't need to trigger re-renders)
+  const userIdRef = useRef(null);
 
   useEffect(() => {
     loadSavedData();
@@ -76,261 +126,198 @@ export default function App() {
 
   const loadSavedData = async () => {
     try {
-      const savedScreen = await AsyncStorage.getItem("currentScreen");
-      if (savedScreen) setCurrentScreen(savedScreen);
+      // Run migration first (v1 flat keys → v2 @al_ keys)
+      await migrateIfNeeded();
 
-      const savedName = await AsyncStorage.getItem("userName");
-      if (savedName) setUserName(savedName);
+      // Ensure we have a userId
+      userIdRef.current = await getOrCreateUserId();
 
-      const savedFocus = await AsyncStorage.getItem("focusPillar");
-      if (savedFocus) setFocusPillar(savedFocus);
+      // Load all data in one batch
+      const data = await loadAllData();
 
-      const savedLogged = await AsyncStorage.getItem("isLoggedToday");
-      if (savedLogged === "true") setIsLoggedToday(true);
+      if (data.theme) setIsDark(data.theme === 'dark');
+      if (data.screen) setCurrentScreen(data.screen);
+      if (data.name) setUserName(data.name);
+      if (data.focusPillar) setFocusPillar(data.focusPillar);
+      if (data.pillarScores) setPillarScores(data.pillarScores);
+      if (data.challengeStates) setChallengeStates(data.challengeStates);
+      if (data.readChapters) setReadChapters(data.readChapters);
+      setTotalDaysLogged(data.totalDaysLogged);
+      setLogHistory(data.logHistory);
+      setLastLogDate(data.lastLogDate);
 
-      const savedStreak = await AsyncStorage.getItem("streak");
-      if (savedStreak) setStreak(parseInt(savedStreak));
-
-      // Load challenge states
-      const savedChallengeStates =
-        await AsyncStorage.getItem("challengeStates");
-      if (savedChallengeStates) {
-        setChallengeStates(JSON.parse(savedChallengeStates));
-      }
-
-      // Load read chapters
-      const savedReadChapters = await AsyncStorage.getItem("readChapters");
-      if (savedReadChapters) {
-        setReadChapters(JSON.parse(savedReadChapters));
-      }
+      // Evaluate streak based on calendar dates
+      const { isLoggedToday: logged, streak: evaluatedStreak } =
+        evaluateDailyLogOnLoad(data.lastLogDate, data.streak);
+      setIsLoggedToday(logged);
+      setStreak(evaluatedStreak);
     } catch (error) {
       console.log("Error loading saved data:", error);
     }
   };
 
+  const toggleTheme = async () => {
+    const next = !isDark;
+    setIsDark(next);
+    try {
+      await saveTheme(next ? 'dark' : 'light');
+    } catch (error) {
+      console.log('Error saving theme:', error);
+    }
+  };
+
+  const themeColors = isDark ? darkColors : lightColors;
+
   const navigateTo = async (screen) => {
     setCurrentScreen(screen);
     try {
-      await AsyncStorage.setItem("currentScreen", screen);
+      await saveScreen(screen);
     } catch (error) {
       console.log("Error saving screen:", error);
     }
   };
 
+  // --- Daily Check-In (date-aware, idempotent) ---
+
   const handleToggleLog = async () => {
-    const newState = !isLoggedToday;
-    setIsLoggedToday(newState);
-
-    const newStreak = newState ? streak + 1 : Math.max(0, streak - 1);
-    setStreak(newStreak);
+    if (isLoggedToday) return; // Already logged today — do nothing
 
     try {
-      await AsyncStorage.setItem("isLoggedToday", newState.toString());
-      await AsyncStorage.setItem("streak", newStreak.toString());
+      const result = await logToday(streak, totalDaysLogged, logHistory);
+      setIsLoggedToday(true);
+      setStreak(result.streak);
+      setTotalDaysLogged(result.totalDaysLogged);
+      setLastLogDate(result.lastLogDate);
+      setLogHistory(result.logHistory);
+
+      // Fire-and-forget cloud sync
+      if (userIdRef.current) {
+        syncDailyLog(
+          userIdRef.current,
+          result.lastLogDate,
+          result.streak,
+          result.totalDaysLogged,
+        );
+      }
     } catch (error) {
-      console.log("Error saving log state:", error);
+      console.log("Error logging today:", error);
     }
   };
 
-  const handleReset = async () => {
-    try {
-      await AsyncStorage.clear();
-    } catch (error) {
-      console.log("Error clearing storage:", error);
-    }
-    setCurrentScreen("LANDING");
-    setSelectedWorkout(null);
-    setIsLoggedToday(false);
-    setStreak(0);
-    setPillarScores({
-      breathing: 5,
-      sleep: 5,
-      hydration: 5,
-      nutrition: 5,
-      movement: 5,
-      environment: 5,
-      mindfulness: 5,
-    });
-    setUserName("Sarah");
-    setFocusPillar("breathing");
-    setSelectedChallengePillar(null);
-    setSelectedChapterId(null);
-    setReadChapters({});
-    // Reset challenge states
-    const initialChallengeStates = {};
-    Object.keys(THIRTY_DAY_CHALLENGES).forEach((pillarId) => {
-      initialChallengeStates[pillarId] = {
-        currentDay: 1,
-        completedTasks: {},
-        streakDays: 0,
-        startDate: null,
-      };
-    });
-    setChallengeStates(initialChallengeStates);
-  };
+  // --- Intake Handlers ---
 
-  const finalizeAssessment = async () => {
-    const entries = Object.entries(pillarScores);
-    const weakest = entries.reduce((prev, curr) =>
-      curr[1] < prev[1] ? curr : prev,
-    );
-    setFocusPillar(weakest[0]);
-
-    try {
-      await AsyncStorage.setItem("focusPillar", weakest[0]);
-    } catch (error) {
-      console.log("Error saving focus pillar:", error);
-    }
-
-    navigateTo("DASHBOARD");
-  };
-
-  const handleSaveName = async (name) => {
+  const handleSaveName = async (name, email) => {
     setUserName(name);
+    setIntakeData((prev) => ({ ...prev, personal: { name, email } }));
     try {
-      await AsyncStorage.setItem("userName", name);
+      await saveName(name);
+      if (email) await saveEmail(email);
+
+      // Fire-and-forget cloud sync
+      if (userIdRef.current) {
+        syncUserProfile(userIdRef.current, { name, email: email || null });
+      }
     } catch (error) {
       console.log("Error saving name:", error);
     }
     navigateTo("INTAKE_DEMOGRAPHICS");
   };
 
-  // Random fill handler for dev/testing - generates random pillar scores
-  const handleRandomFill = async () => {
-    const names = [
-      "Alex",
-      "Jordan",
-      "Sam",
-      "Taylor",
-      "Morgan",
-      "Casey",
-      "Riley",
-    ];
-    const randomName = names[Math.floor(Math.random() * names.length)];
+  const handleSaveDemographics = async (demographics, formData) => {
+    setIntakeData((prev) => ({ ...prev, demographics: formData || demographics }));
+    try {
+      await saveDemographics(demographics);
 
-    // Generate random scores between 2-9 for each pillar
-    const randomScores = {
-      breathing: Math.floor(Math.random() * 8) + 2,
-      sleep: Math.floor(Math.random() * 8) + 2,
-      hydration: Math.floor(Math.random() * 8) + 2,
-      nutrition: Math.floor(Math.random() * 8) + 2,
-      movement: Math.floor(Math.random() * 8) + 2,
-      environment: Math.floor(Math.random() * 8) + 2,
-      mindfulness: Math.floor(Math.random() * 8) + 2,
-    };
+      if (userIdRef.current) {
+        syncUserProfile(userIdRef.current, demographics);
+      }
+    } catch (error) {
+      console.log("Error saving demographics:", error);
+    }
+    navigateTo("INTAKE_GOALS");
+  };
 
-    // Find the weakest pillar
-    const entries = Object.entries(randomScores);
+  const handleSaveGoals = async (goals, experience, injuries) => {
+    setIntakeData((prev) => ({ ...prev, goals: { selectedGoals: goals, experience, injuries } }));
+    try {
+      await saveGoals(goals, experience, injuries);
+
+      if (userIdRef.current) {
+        syncUserProfile(userIdRef.current, { goals, experience, injuries });
+      }
+    } catch (error) {
+      console.log("Error saving goals:", error);
+    }
+    navigateTo("INTAKE_MOVEMENT");
+  };
+
+  // --- Assessment Finalization ---
+
+  const finalizeAssessment = async () => {
+    const entries = Object.entries(pillarScores);
     const weakest = entries.reduce((prev, curr) =>
       curr[1] < prev[1] ? curr : prev,
     );
+    const weakestPillar = weakest[0];
+    setFocusPillar(weakestPillar);
 
-    // Set all the states
-    setUserName(randomName);
-    setPillarScores(randomScores);
-    setFocusPillar(weakest[0]);
-    setStreak(Math.floor(Math.random() * 15)); // Random streak 0-14
-
-    // Save to AsyncStorage
     try {
-      await AsyncStorage.setItem("userName", randomName);
-      await AsyncStorage.setItem("focusPillar", weakest[0]);
-      await AsyncStorage.setItem("currentScreen", "DASHBOARD");
+      await savePillarScores(pillarScores);
+      await saveFocusPillar(weakestPillar);
+      await saveIntakeCompleted();
+
+      // Fire-and-forget cloud sync
+      if (userIdRef.current) {
+        syncPillarScoresCloud(userIdRef.current, pillarScores, weakestPillar);
+      }
     } catch (error) {
-      console.log("Error saving random data:", error);
+      console.log("Error saving assessment:", error);
     }
 
     navigateTo("DASHBOARD");
   };
 
-  // Challenge handlers
+  // --- Challenge Handlers ---
+
   const handleSelectChallenge = (pillarId) => {
     setSelectedChallengePillar(pillarId);
     navigateTo("CHALLENGE_DETAIL");
   };
 
   const handleToggleChallengeTask = async (pillarId, taskId) => {
-    const todayKey = new Date().toISOString().split("T")[0];
-
     setChallengeStates((prev) => {
       const pillarState = prev[pillarId];
-      const todayTasks = pillarState.completedTasks[todayKey] || [];
-      const isCompleted = todayTasks.includes(taskId);
-
-      let newTodayTasks;
-      if (isCompleted) {
-        newTodayTasks = todayTasks.filter((t) => t !== taskId);
-      } else {
-        newTodayTasks = [...todayTasks, taskId];
-      }
-
-      // Check if all available tasks for today are completed
-      const challenge = THIRTY_DAY_CHALLENGES[pillarId];
-      const availableTasks = challenge.tasks.filter(
-        (t) => t.unlockedDay <= pillarState.currentDay,
+      const updatedPillarState = advanceChallengeDay(
+        pillarState,
+        pillarId,
+        taskId,
+        TWENTY_ONE_DAY_CHALLENGES,
       );
-      const allCompleted = availableTasks.every((t) =>
-        newTodayTasks.includes(t.id),
-      );
-
-      // Update streak
-      let newStreakDays = pillarState.streakDays;
-      if (allCompleted && !isCompleted) {
-        newStreakDays = pillarState.streakDays + 1;
-      } else if (
-        !allCompleted &&
-        isCompleted &&
-        todayTasks.length === availableTasks.length
-      ) {
-        newStreakDays = Math.max(0, pillarState.streakDays - 1);
-      }
-
-      // Advance day if all tasks completed and day < 30
-      let newCurrentDay = pillarState.currentDay;
-      if (allCompleted && pillarState.currentDay < 30) {
-        newCurrentDay = pillarState.currentDay + 1;
-      }
 
       const newState = {
         ...prev,
-        [pillarId]: {
-          ...pillarState,
-          currentDay: newCurrentDay,
-          completedTasks: {
-            ...pillarState.completedTasks,
-            [todayKey]: newTodayTasks,
-          },
-          streakDays: newStreakDays,
-          startDate: pillarState.startDate || todayKey,
-        },
+        [pillarId]: updatedPillarState,
       };
 
-      // Save to AsyncStorage
-      AsyncStorage.setItem("challengeStates", JSON.stringify(newState)).catch(
-        (error) => console.log("Error saving challenge states:", error),
+      // Save locally
+      saveChallengeStates(newState).catch((error) =>
+        console.log("Error saving challenge states:", error),
       );
+
+      // Fire-and-forget cloud sync
+      if (userIdRef.current) {
+        const today = new Date().toISOString().split("T")[0];
+        const todayTasks = updatedPillarState.completedTasks[today] || [];
+        syncChallengeProgress(
+          userIdRef.current,
+          pillarId,
+          updatedPillarState,
+        );
+        syncChallengeTasks(userIdRef.current, pillarId, today, todayTasks);
+      }
 
       return newState;
     });
-  };
-
-  // Book chapter handlers
-  const handleSelectChapter = (chapterId) => {
-    setSelectedChapterId(chapterId);
-    navigateTo("CHAPTER_VIEW");
-  };
-
-  const handleMarkChapterRead = async (chapterId, isRead) => {
-    const newReadChapters = { ...readChapters, [chapterId]: isRead };
-    setReadChapters(newReadChapters);
-    try {
-      await AsyncStorage.setItem(
-        "readChapters",
-        JSON.stringify(newReadChapters),
-      );
-    } catch (error) {
-      console.log("Error saving read chapters:", error);
-    }
   };
 
   // Dev mode: Set challenge day directly for testing
@@ -344,22 +331,136 @@ export default function App() {
         },
       };
 
-      AsyncStorage.setItem("challengeStates", JSON.stringify(newState)).catch(
-        (error) => console.log("Error saving challenge states:", error),
+      saveChallengeStates(newState).catch((error) =>
+        console.log("Error saving challenge states:", error),
       );
 
       return newState;
     });
   };
 
+  // --- Book Chapter Handlers ---
+
+  const handleSelectChapter = (chapterId) => {
+    setSelectedChapterId(chapterId);
+    navigateTo("CHAPTER_VIEW");
+  };
+
+  const handleMarkChapterRead = async (chapterId, isRead) => {
+    const newReadChapters = { ...readChapters, [chapterId]: isRead };
+    setReadChapters(newReadChapters);
+    try {
+      await saveReadChapters(newReadChapters);
+
+      // Fire-and-forget cloud sync
+      if (userIdRef.current) {
+        syncBookProgress(userIdRef.current, chapterId, isRead);
+      }
+    } catch (error) {
+      console.log("Error saving read chapters:", error);
+    }
+  };
+
+  // --- Random Fill (Dev/Testing) ---
+
+  const handleRandomFill = async () => {
+    const names = [
+      "Alex",
+      "Jordan",
+      "Sam",
+      "Taylor",
+      "Morgan",
+      "Casey",
+      "Riley",
+    ];
+    const randomName = names[Math.floor(Math.random() * names.length)];
+    const randomEmail = `${randomName.toLowerCase()}@test.com`;
+
+    const randomScores = {
+      breathing: Math.floor(Math.random() * 8) + 2,
+      sleep: Math.floor(Math.random() * 8) + 2,
+      hydration: Math.floor(Math.random() * 8) + 2,
+      nutrition: Math.floor(Math.random() * 8) + 2,
+      movement: Math.floor(Math.random() * 8) + 2,
+      environment: Math.floor(Math.random() * 8) + 2,
+      mindfulness: Math.floor(Math.random() * 8) + 2,
+    };
+
+    const entries = Object.entries(randomScores);
+    const weakest = entries.reduce((prev, curr) =>
+      curr[1] < prev[1] ? curr : prev,
+    );
+    const randomStreak = Math.floor(Math.random() * 15);
+
+    // Set all states
+    setUserName(randomName);
+    setPillarScores(randomScores);
+    setFocusPillar(weakest[0]);
+    setStreak(randomStreak);
+
+    const fillData = {
+      name: randomName,
+      email: randomEmail,
+      age: 25 + Math.floor(Math.random() * 30),
+      sex: ["Male", "Female", "Other"][Math.floor(Math.random() * 3)],
+      weight: 140 + Math.floor(Math.random() * 80),
+      goalWeight: 130 + Math.floor(Math.random() * 60),
+      goals: ["fat", "energy"],
+      experience: ["beg", "int", "adv"][Math.floor(Math.random() * 3)],
+      injuries: "",
+      pillarScores: randomScores,
+      focusPillar: weakest[0],
+      streak: randomStreak,
+      screen: "DASHBOARD",
+    };
+
+    try {
+      await saveAllData(fillData);
+
+      // Ensure userId exists and sync
+      if (!userIdRef.current) {
+        userIdRef.current = await getOrCreateUserId();
+      }
+      syncAllDataCloud(userIdRef.current, {
+        ...fillData,
+        intakeCompleted: true,
+      });
+    } catch (error) {
+      console.log("Error saving random data:", error);
+    }
+
+    navigateTo("DASHBOARD");
+  };
+
+  // --- Reset ---
+
+  const handleReset = async () => {
+    try {
+      await clearAllData();
+    } catch (error) {
+      console.log("Error clearing storage:", error);
+    }
+    setCurrentScreen("LANDING");
+    setSelectedWorkout(null);
+    setIsLoggedToday(false);
+    setStreak(0);
+    setTotalDaysLogged(0);
+    setLastLogDate(null);
+    setLogHistory({});
+    setPillarScores(DEFAULT_SCORES);
+    setUserName("");
+    setFocusPillar("breathing");
+    setSelectedChallengePillar(null);
+    setSelectedChapterId(null);
+    setReadChapters({});
+    setChallengeStates(buildInitialChallengeStates());
+    userIdRef.current = null;
+  };
+
   const renderScreen = () => {
     switch (currentScreen) {
       case "LANDING":
-        return (
-          <LandingPage
-            onGetStarted={() => navigateTo("WELCOME")}
-          />
-        );
+        return <LandingPage onGetStarted={() => navigateTo("WELCOME")} />;
       case "WELCOME":
         return (
           <WelcomeScreen
@@ -368,16 +469,36 @@ export default function App() {
           />
         );
       case "INTAKE_PERSONAL":
-        return <IntakePersonal onNext={handleSaveName} onBack={() => navigateTo("WELCOME")} />;
+        return (
+          <IntakePersonal
+            initialData={intakeData.personal}
+            onNext={handleSaveName}
+            onBack={() => navigateTo("WELCOME")}
+          />
+        );
       case "INTAKE_DEMOGRAPHICS":
-        return <IntakeDemographics onNext={() => navigateTo("INTAKE_GOALS")} onBack={() => navigateTo("INTAKE_PERSONAL")} />;
+        return (
+          <IntakeDemographics
+            initialData={intakeData.demographics}
+            onNext={handleSaveDemographics}
+            onBack={() => navigateTo("INTAKE_PERSONAL")}
+          />
+        );
       case "INTAKE_GOALS":
-        return <IntakeGoals onNext={() => navigateTo("INTAKE_MOVEMENT")} onBack={() => navigateTo("INTAKE_DEMOGRAPHICS")} />;
+        return (
+          <IntakeGoals
+            initialData={intakeData.goals}
+            onNext={handleSaveGoals}
+            onBack={() => navigateTo("INTAKE_DEMOGRAPHICS")}
+          />
+        );
       case "INTAKE_MOVEMENT":
         return (
           <IntakeMovement
-            onNext={(score) => {
+            initialData={intakeData.movement}
+            onNext={(score, formData) => {
               setPillarScores((p) => ({ ...p, movement: score }));
+              setIntakeData((prev) => ({ ...prev, movement: formData }));
               navigateTo("INTAKE_NUTRITION");
             }}
             onBack={() => navigateTo("INTAKE_GOALS")}
@@ -386,12 +507,14 @@ export default function App() {
       case "INTAKE_NUTRITION":
         return (
           <IntakeNutrition
-            onNext={(nScore, hScore) => {
+            initialData={intakeData.nutrition}
+            onNext={(nScore, hScore, formData) => {
               setPillarScores((p) => ({
                 ...p,
                 nutrition: nScore,
                 hydration: hScore,
               }));
+              setIntakeData((prev) => ({ ...prev, nutrition: formData }));
               navigateTo("INTAKE_BREATHING_SLEEP");
             }}
             onBack={() => navigateTo("INTAKE_MOVEMENT")}
@@ -400,12 +523,14 @@ export default function App() {
       case "INTAKE_BREATHING_SLEEP":
         return (
           <IntakeBreathingSleep
-            onNext={(bScore, sScore) => {
+            initialData={intakeData.breathingSleep}
+            onNext={(bScore, sScore, formData) => {
               setPillarScores((p) => ({
                 ...p,
                 breathing: bScore,
                 sleep: sScore,
               }));
+              setIntakeData((prev) => ({ ...prev, breathingSleep: formData }));
               navigateTo("INTAKE_MINDFULNESS");
             }}
             onBack={() => navigateTo("INTAKE_NUTRITION")}
@@ -414,19 +539,26 @@ export default function App() {
       case "INTAKE_MINDFULNESS":
         return (
           <IntakeMindfulness
-            onNext={(mScore, eScore) => {
+            initialData={intakeData.mindfulness}
+            onNext={(mScore, eScore, formData) => {
               setPillarScores((p) => ({
                 ...p,
                 mindfulness: mScore,
                 environment: eScore,
               }));
+              setIntakeData((prev) => ({ ...prev, mindfulness: formData }));
               navigateTo("SAFETY_NOTICE");
             }}
             onBack={() => navigateTo("INTAKE_BREATHING_SLEEP")}
           />
         );
       case "SAFETY_NOTICE":
-        return <SafetyNotice onNext={finalizeAssessment} onBack={() => navigateTo("INTAKE_MINDFULNESS")} />;
+        return (
+          <SafetyNotice
+            onNext={finalizeAssessment}
+            onBack={() => navigateTo("INTAKE_MINDFULNESS")}
+          />
+        );
       case "DASHBOARD":
         return (
           <Dashboard
@@ -465,14 +597,17 @@ export default function App() {
         return <NutritionLog onNavigate={navigateTo} />;
       case "NUTRITION_SUMMARY":
         return <NutritionSummary onNavigate={navigateTo} />;
-      case "PROGRESS_SUMMARY":
-        return <ProgressSummary onNavigate={navigateTo} />;
       case "MEDITATION_LIST":
-        return <MeditationList onNavigate={navigateTo} onSelectMeditation={(m) => console.log('Selected:', m.title)} />;
+        return (
+          <MeditationList
+            onNavigate={navigateTo}
+            onSelectMeditation={(m) => console.log("Selected:", m.title)}
+          />
+        );
       case "PILLARS_OVERVIEW":
         return <PillarsOverview onNavigate={navigateTo} />;
-      case "SETTINGS":
-        return <SettingsScreen onNavigate={navigateTo} />;
+      case "SUPPORT":
+        return <SupportScreen onNavigate={navigateTo} />;
       case "BOOK":
         return (
           <BookScreen
@@ -515,21 +650,19 @@ export default function App() {
           />
         );
       default:
-        return (
-          <LandingPage
-            onGetStarted={() => navigateTo("WELCOME")}
-          />
-        );
+        return <LandingPage onGetStarted={() => navigateTo("WELCOME")} />;
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.backgroundDark }}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={colors.backgroundDark}
-      />
-      {renderScreen()}
-    </SafeAreaView>
+    <ThemeProvider value={{ colors: themeColors, isDark, toggleTheme }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
+        <StatusBar
+          barStyle={isDark ? 'light-content' : 'dark-content'}
+          backgroundColor={themeColors.background}
+        />
+        {renderScreen()}
+      </SafeAreaView>
+    </ThemeProvider>
   );
 }

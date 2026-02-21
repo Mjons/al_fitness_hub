@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -7,11 +7,14 @@ import {
   StyleSheet,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { colors } from "../styles/theme";
+import { useTheme } from "../styles/ThemeContext";
 import { PILLARS } from "../constants";
 import { BottomNav } from "./BottomNav";
 
 export const PillarsOverview = ({ onNavigate }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -19,7 +22,7 @@ export const PillarsOverview = ({ onNavigate }) => {
           style={styles.backButton}
           onPress={() => onNavigate("DASHBOARD")}
         >
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pillars Overview</Text>
         <View style={{ width: 40 }} />
@@ -70,7 +73,7 @@ export const PillarsOverview = ({ onNavigate }) => {
             />
           </View>
           <View style={styles.challengeBannerContent}>
-            <Text style={styles.challengeBannerTitle}>30-Day Challenges</Text>
+            <Text style={styles.challengeBannerTitle}>21-Day Challenges</Text>
             <Text style={styles.challengeBannerSubtitle}>
               Start a progressive challenge for any pillar
             </Text>
@@ -134,10 +137,10 @@ export const PillarsOverview = ({ onNavigate }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
@@ -145,7 +148,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.05)",
+    borderBottomColor: colors.divider,
   },
   backButton: {
     width: 40,
@@ -157,7 +160,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
   },
   content: {
     flex: 1,
@@ -169,7 +172,7 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 24,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
   },
   pageSubtitle: {
     fontSize: 14,
@@ -178,11 +181,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   balanceCard: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 24,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
+    borderColor: colors.divider,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -206,7 +209,7 @@ const styles = StyleSheet.create({
   balanceNumber: {
     fontSize: 40,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
   },
   balanceMax: {
     fontSize: 18,
@@ -230,7 +233,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -238,11 +241,11 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   pillarCard: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
+    borderColor: colors.divider,
   },
   pillarHeader: {
     flexDirection: "row",
@@ -259,14 +262,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: colors.divider,
     alignItems: "center",
     justifyContent: "center",
   },
   pillarName: {
     fontSize: 18,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
   },
   pillarStatus: {
     fontSize: 12,
@@ -332,7 +335,7 @@ const styles = StyleSheet.create({
   challengeBannerTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
   },
   challengeBannerSubtitle: {
     fontSize: 12,

@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -6,13 +6,12 @@ import {
   ScrollView,
   Image,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
   Linking,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { colors, spacing, borderRadius, fontSize } from "../styles/theme";
-
-const { width } = Dimensions.get("window");
+import { spacing, borderRadius, fontSize } from "../styles/theme";
+import { useTheme } from "../styles/ThemeContext";
 
 const PILLARS = [
   {
@@ -82,8 +81,8 @@ const FEATURES = [
   },
   {
     icon: "emoji-events",
-    title: "30-Day Challenges",
-    desc: "Progressive habits that unlock weekly as you improve",
+    title: "21-Day Challenges",
+    desc: "Progressive habits that unlock as you advance through 4 phases",
   },
   {
     icon: "fitness-center",
@@ -152,6 +151,9 @@ const FAQ_ITEMS = [
 
 export const LandingPage = ({ onGetStarted }) => {
   const scrollRef = useRef(null);
+  const { colors, isDark, toggleTheme } = useTheme();
+  const { width } = useWindowDimensions();
+  const styles = useMemo(() => makeStyles(colors, width), [colors, width]);
 
   const scrollToSection = (y) => {
     scrollRef.current?.scrollTo({ y, animated: true });
@@ -167,9 +169,14 @@ export const LandingPage = ({ onGetStarted }) => {
           </View>
           <Text style={styles.logoText}>Coach Al</Text>
         </View>
-        <TouchableOpacity style={styles.headerCTA} onPress={onGetStarted}>
-          <Text style={styles.headerCTAText}>Get Started</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
+            <MaterialIcons name={isDark ? "light-mode" : "dark-mode"} size={20} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerCTA} onPress={onGetStarted}>
+            <Text style={styles.headerCTAText}>Get Started</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -187,7 +194,7 @@ export const LandingPage = ({ onGetStarted }) => {
           <Text style={styles.heroTitle}>Stop Running{"\n"}on Empty</Text>
 
           <Text style={styles.heroSubtitle}>
-            From burnout to breakthrough in 30 days. Master the 7 Pillars of
+            From burnout to breakthrough in 21 days. Master the 7 Pillars of
             Health with Coach Al's proven system for busy parents.
           </Text>
 
@@ -200,7 +207,7 @@ export const LandingPage = ({ onGetStarted }) => {
             <MaterialIcons
               name="arrow-forward"
               size={20}
-              color={colors.black}
+              color={colors.textInverse}
             />
           </TouchableOpacity>
 
@@ -306,12 +313,14 @@ export const LandingPage = ({ onGetStarted }) => {
                 >
                   <MaterialIcons
                     name={pillar.icon}
-                    size={28}
+                    size={24}
                     color={pillar.color}
                   />
                 </View>
-                <Text style={styles.pillarName}>{pillar.name}</Text>
-                <Text style={styles.pillarTagline}>{pillar.tagline}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.pillarName}>{pillar.name}</Text>
+                  <Text style={styles.pillarTagline}>{pillar.tagline}</Text>
+                </View>
               </View>
             ))}
           </View>
@@ -345,8 +354,8 @@ export const LandingPage = ({ onGetStarted }) => {
               <View style={styles.stepContent}>
                 <Text style={styles.stepTitle}>Focus on Your Priority</Text>
                 <Text style={styles.stepDesc}>
-                  Start your personalized 30-day challenge. New habits unlock
-                  each week as you progress. Just 5-15 min/day.
+                  Start your personalized 21-day challenge. New habits unlock
+                  each phase as you progress. Just 5-15 min/day.
                 </Text>
               </View>
             </View>
@@ -560,7 +569,7 @@ export const LandingPage = ({ onGetStarted }) => {
             <MaterialIcons
               name="arrow-forward"
               size={20}
-              color={colors.black}
+              color={colors.textInverse}
             />
           </TouchableOpacity>
 
@@ -587,10 +596,19 @@ export const LandingPage = ({ onGetStarted }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors, width) => {
+  // Responsive columns: 2 on small, 3 on medium, 4 on large
+  const pillarColumns = width >= 768 ? 4 : width >= 500 ? 3 : 2;
+  const pillarCardWidth =
+    (width - spacing.lg * 2 - spacing.md * (pillarColumns - 1)) / pillarColumns;
+
+  // Features: 1 column on small, 2 on medium+
+  const featureColumns = width >= 600 ? 2 : 1;
+
+  return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
@@ -617,7 +635,20 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: fontSize.lg,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  themeToggle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.divider,
   },
   headerCTA: {
     backgroundColor: colors.primary,
@@ -626,7 +657,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   headerCTAText: {
-    color: colors.black,
+    color: colors.textInverse,
     fontWeight: "700",
     fontSize: fontSize.sm,
   },
@@ -661,7 +692,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 40,
     fontWeight: "800",
-    color: colors.white,
+    color: colors.text,
     textAlign: "center",
     lineHeight: 48,
     marginBottom: spacing.lg,
@@ -687,7 +718,7 @@ const styles = StyleSheet.create({
     maxWidth: 320,
   },
   primaryButtonText: {
-    color: colors.black,
+    color: colors.textInverse,
     fontSize: fontSize.md,
     fontWeight: "700",
   },
@@ -705,7 +736,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 2,
-    borderColor: colors.backgroundDark,
+    borderColor: colors.background,
     overflow: "hidden",
   },
   avatarImage: {
@@ -745,7 +776,7 @@ const styles = StyleSheet.create({
   },
   phoneMockup: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
     borderRadius: 24,
     padding: spacing.md,
   },
@@ -753,7 +784,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   mockupGreeting: {
-    color: colors.white,
+    color: colors.text,
     fontSize: fontSize.md,
     fontWeight: "700",
   },
@@ -788,7 +819,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   sectionTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: fontSize.xxl,
     fontWeight: "800",
     marginBottom: spacing.sm,
@@ -809,7 +840,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
   },
@@ -848,35 +879,31 @@ const styles = StyleSheet.create({
 
   // Pillars Grid
   pillarsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
     gap: spacing.md,
   },
   pillarCard: {
-    width: (width - spacing.lg * 2 - spacing.md) / 2,
-    backgroundColor: colors.surfaceDark,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: colors.surface,
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
-    alignItems: "center",
   },
   pillarIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: spacing.md,
   },
   pillarName: {
-    color: colors.white,
+    color: colors.text,
     fontSize: fontSize.base,
     fontWeight: "700",
-    marginBottom: spacing.xs,
   },
   pillarTagline: {
     color: colors.gray[500],
     fontSize: fontSize.xs,
-    textAlign: "center",
   },
 
   // Steps
@@ -907,7 +934,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   stepNumberText: {
-    color: colors.black,
+    color: colors.textInverse,
     fontSize: fontSize.lg,
     fontWeight: "800",
   },
@@ -915,7 +942,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   stepTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: fontSize.lg,
     fontWeight: "700",
     marginBottom: spacing.xs,
@@ -928,12 +955,15 @@ const styles = StyleSheet.create({
 
   // Features Grid
   featuresGrid: {
+    flexDirection: featureColumns > 1 ? "row" : "column",
+    flexWrap: "wrap",
     gap: spacing.md,
   },
   featureCard: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
+    width: featureColumns > 1 ? (width - spacing.lg * 2 - spacing.md) / 2 : "100%",
   },
   featureIconContainer: {
     width: 48,
@@ -945,7 +975,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   featureTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: fontSize.md,
     fontWeight: "700",
     marginBottom: spacing.xs,
@@ -958,7 +988,7 @@ const styles = StyleSheet.create({
 
   // Science Section
   scienceBox: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     padding: spacing.xxl,
     borderRadius: borderRadius.xl,
     borderWidth: 1,
@@ -972,7 +1002,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   scienceTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: fontSize.xl,
     fontWeight: "700",
     marginBottom: spacing.xl,
@@ -1005,7 +1035,7 @@ const styles = StyleSheet.create({
   },
   testimonialCard: {
     width: 300,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     padding: spacing.xl,
     borderRadius: borderRadius.xl,
     marginRight: spacing.md,
@@ -1027,7 +1057,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   testimonialName: {
-    color: colors.white,
+    color: colors.text,
     fontSize: fontSize.base,
     fontWeight: "700",
   },
@@ -1053,7 +1083,7 @@ const styles = StyleSheet.create({
 
   // About Section
   aboutBox: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.xl,
     overflow: "hidden",
   },
@@ -1082,7 +1112,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   aboutName: {
-    color: colors.white,
+    color: colors.text,
     fontSize: fontSize.xl,
     fontWeight: "800",
     marginBottom: spacing.md,
@@ -1109,20 +1139,20 @@ const styles = StyleSheet.create({
 
   // Book Section
   bookBox: {
-    flexDirection: "row",
-    backgroundColor: colors.surfaceDark,
+    flexDirection: width < 400 ? "column" : "row",
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.xl,
     overflow: "hidden",
   },
   bookCover: {
-    width: 120,
+    width: width < 400 ? "100%" : 120,
     backgroundColor: colors.gray[800],
     padding: spacing.md,
     alignItems: "center",
     justifyContent: "center",
   },
   bookCoverTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: fontSize.xs,
     fontWeight: "700",
     textAlign: "center",
@@ -1141,7 +1171,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   bookTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: fontSize.lg,
     fontWeight: "700",
     marginBottom: spacing.sm,
@@ -1167,7 +1197,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   faqItem: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
   },
@@ -1178,7 +1208,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   faqQuestionText: {
-    color: colors.white,
+    color: colors.text,
     fontSize: fontSize.base,
     fontWeight: "600",
     flex: 1,
@@ -1209,7 +1239,7 @@ const styles = StyleSheet.create({
     opacity: 0.1,
   },
   ctaTitle: {
-    color: colors.white,
+    color: colors.text,
     fontSize: 32,
     fontWeight: "800",
     textAlign: "center",
@@ -1245,7 +1275,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   footerLogoText: {
-    color: colors.white,
+    color: colors.text,
     fontSize: fontSize.lg,
     fontWeight: "700",
   },
@@ -1259,3 +1289,4 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
   },
 });
+};

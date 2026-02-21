@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,16 @@ import {
   StyleSheet,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { colors } from "../styles/theme";
-import { THIRTY_DAY_CHALLENGES, getWeekFromDay } from "../constants";
+import { useTheme } from "../styles/ThemeContext";
+import {
+  TWENTY_ONE_DAY_CHALLENGES,
+  getPhaseFromDay,
+  CHALLENGE_PHASES,
+  DAY_21_CHALLENGES,
+  DAY_21_REWARDS,
+  CHALLENGE_TRIGGERS,
+  PHASE_ENCOURAGEMENT,
+} from "../constants";
 import { BottomNav } from "./BottomNav";
 
 // DEV_MODE: Set to false to hide dev controls
@@ -19,21 +27,26 @@ export const ChallengeDetail = ({
   challengeState,
   onToggleTask,
   onNavigate,
-  onSetDay, // Dev mode: allows setting the current day
+  onSetDay,
 }) => {
-  const challenge = THIRTY_DAY_CHALLENGES[pillarId];
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const challenge = TWENTY_ONE_DAY_CHALLENGES[pillarId];
   if (!challenge) return null;
 
   const { currentDay, completedTasks, streakDays } = challengeState;
-  const currentWeek = getWeekFromDay(currentDay);
+  const currentPhase = getPhaseFromDay(currentDay);
   const todayKey = new Date().toISOString().split("T")[0];
   const todayCompletedTasks = completedTasks[todayKey] || [];
 
   // Calculate progress
-  const totalDays = 30;
-  const progressPercent = Math.round((currentDay / totalDays) * 100);
+  const totalDays = 21;
+  const progressPercent = Math.min(100, Math.round((currentDay / totalDays) * 100));
+  const isCompleted = currentDay >= 21;
+  const isDay21 = currentDay === 21;
 
-  // Get tasks for current week
+  // Get tasks for current phase
   const availableTasks = challenge.tasks.filter(
     (task) => task.unlockedDay <= currentDay,
   );
@@ -46,6 +59,10 @@ export const ChallengeDetail = ({
     availableTasks.length > 0 &&
     availableTasks.every((task) => isTaskCompleted(task.id));
 
+  // Determine which triggers have been reached
+  const day21Challenge = DAY_21_CHALLENGES[pillarId];
+  const encouragement = PHASE_ENCOURAGEMENT[pillarId];
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -53,7 +70,7 @@ export const ChallengeDetail = ({
           style={styles.backButton}
           onPress={() => onNavigate("CHALLENGE_PROGRESS")}
         >
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{challenge.name} Challenge</Text>
         <View style={{ width: 40 }} />
@@ -62,42 +79,38 @@ export const ChallengeDetail = ({
       {/* Dev Mode Controls */}
       {DEV_MODE && onSetDay && (
         <View style={styles.devPanel}>
-          <Text style={styles.devPanelLabel}>DEV: Jump to Week</Text>
+          <Text style={styles.devPanelLabel}>DEV: Jump to Phase</Text>
           <View style={styles.devButtonRow}>
             {[
-              { week: 1, day: 1 },
-              { week: 2, day: 8 },
-              { week: 3, day: 15 },
-              { week: 4, day: 22 },
-            ].map(({ week, day }) => (
+              { phase: 1, day: 1 },
+              { phase: 2, day: 6 },
+              { phase: 3, day: 11 },
+              { phase: 4, day: 16 },
+            ].map(({ phase, day }) => (
               <TouchableOpacity
-                key={week}
+                key={phase}
                 style={[
                   styles.devWeekButton,
-                  currentDay >= day &&
-                    currentDay < (day === 22 ? 31 : day + 7) &&
-                    styles.devWeekButtonActive,
+                  currentPhase === phase && styles.devWeekButtonActive,
                 ]}
                 onPress={() => onSetDay(pillarId, day)}
               >
                 <Text
                   style={[
                     styles.devWeekButtonText,
-                    currentDay >= day &&
-                      currentDay < (day === 22 ? 31 : day + 7) &&
-                      styles.devWeekButtonTextActive,
+                    currentPhase === phase && styles.devWeekButtonTextActive,
                   ]}
                 >
-                  W{week}
+                  P{phase}
                 </Text>
                 <Text style={styles.devWeekButtonSub}>Day {day}</Text>
               </TouchableOpacity>
             ))}
             <TouchableOpacity
               style={[styles.devWeekButton, styles.devCompleteButton]}
-              onPress={() => onSetDay(pillarId, 30)}
+              onPress={() => onSetDay(pillarId, 21)}
             >
-              <Text style={styles.devWeekButtonText}>D30</Text>
+              <Text style={styles.devWeekButtonText}>D21</Text>
               <Text style={styles.devWeekButtonSub}>Done</Text>
             </TouchableOpacity>
           </View>
@@ -120,8 +133,14 @@ export const ChallengeDetail = ({
               />
             </View>
             <View style={styles.progressInfo}>
-              <Text style={styles.progressTitle}>30-Day Challenge</Text>
-              <Text style={styles.progressWeek}>Week {currentWeek} of 4</Text>
+              <Text style={styles.progressTitle}>21-Day Challenge</Text>
+              <Text style={styles.progressWeek}>
+                {isCompleted
+                  ? "Challenge Complete!"
+                  : isDay21
+                    ? "Day 21 — Celebration!"
+                    : `Phase ${currentPhase} of 4`}
+              </Text>
             </View>
             <View style={styles.dayBadge}>
               <Text style={styles.dayBadgeText}>Day {currentDay}</Text>
@@ -169,14 +188,44 @@ export const ChallengeDetail = ({
                 size={20}
                 color={colors.warning}
               />
-              <Text style={styles.statValue}>{currentWeek}</Text>
+              <Text style={styles.statValue}>{availableTasks.length}</Text>
               <Text style={styles.statLabel}>Tasks Active</Text>
             </View>
           </View>
         </View>
 
+        {/* Day 21 Celebration */}
+        {isCompleted && day21Challenge && (
+          <View style={styles.celebrationCard}>
+            <View style={styles.celebrationHeader}>
+              <MaterialIcons name="celebration" size={28} color={colors.warning} />
+              <Text style={styles.celebrationTitle}>Day 21 — Cherry on Top!</Text>
+            </View>
+            <View style={styles.cherryOnTopCard}>
+              <MaterialIcons name={day21Challenge.icon} size={24} color={colors.primary} />
+              <View style={styles.cherryOnTopContent}>
+                <Text style={styles.cherryOnTopName}>{day21Challenge.name}</Text>
+                <Text style={styles.cherryOnTopDesc}>{day21Challenge.description}</Text>
+              </View>
+            </View>
+            <View style={styles.rewardsSection}>
+              <Text style={styles.rewardsTitle}>Your Rewards</Text>
+              {DAY_21_REWARDS.map((reward, idx) => (
+                <View key={idx} style={styles.rewardItem}>
+                  <MaterialIcons name="card-giftcard" size={18} color={colors.primary} />
+                  <Text style={styles.rewardText}>{reward}</Text>
+                </View>
+              ))}
+            </View>
+            <TouchableOpacity style={styles.scheduleButton} activeOpacity={0.7}>
+              <MaterialIcons name="event" size={20} color={colors.textInverse} />
+              <Text style={styles.scheduleButtonText}>Schedule Your Free Session</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Today's Status */}
-        {allTasksCompleted && (
+        {allTasksCompleted && !isCompleted && (
           <View style={styles.completedBanner}>
             <MaterialIcons
               name="celebration"
@@ -189,63 +238,102 @@ export const ChallengeDetail = ({
           </View>
         )}
 
+        {/* Phase Trigger Messages */}
+        {currentDay >= 5 && currentDay < 10 && encouragement && (
+          <View style={styles.triggerCard}>
+            <MaterialIcons name="emoji-emotions" size={22} color={colors.primary} />
+            <View style={styles.triggerContent}>
+              <Text style={styles.triggerLabel}>Phase 1 Complete!</Text>
+              <Text style={styles.triggerText}>{encouragement}</Text>
+            </View>
+          </View>
+        )}
+
+        {currentDay >= 10 && currentDay < 15 && (
+          <View style={styles.triggerCard}>
+            <MaterialIcons name="play-circle-filled" size={22} color={colors.secondary} />
+            <View style={styles.triggerContent}>
+              <Text style={styles.triggerLabel}>Mid-Challenge Video</Text>
+              <Text style={styles.triggerText}>
+                Watch Coach Al's motivation and tips for your {challenge.name.toLowerCase()} journey.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {currentDay >= 15 && currentDay < 21 && (
+          <View style={styles.triggerCard}>
+            <MaterialIcons name="local-offer" size={22} color={colors.warning} />
+            <View style={styles.triggerContent}>
+              <Text style={styles.triggerLabel}>15% Off Coaching!</Text>
+              <Text style={styles.triggerText}>
+                Use code PILLAR15 for 15% off coaching packages. You've earned it!
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* Today's Tasks */}
-        <Text style={styles.sectionTitle}>Today's Tasks</Text>
-        <View style={styles.tasksList}>
-          {availableTasks.map((task) => {
-            const completed = isTaskCompleted(task.id);
-            return (
-              <TouchableOpacity
-                key={task.id}
-                style={[styles.taskCard, completed && styles.taskCardCompleted]}
-                onPress={() => onToggleTask(pillarId, task.id)}
-                activeOpacity={0.7}
-              >
-                <View
-                  style={[
-                    styles.taskCheckbox,
-                    completed && styles.taskCheckboxCompleted,
-                  ]}
-                >
-                  {completed && (
-                    <MaterialIcons
-                      name="check"
-                      size={16}
-                      color={colors.black}
-                    />
-                  )}
-                </View>
-                <View style={styles.taskContent}>
-                  <View style={styles.taskHeader}>
-                    <Text
+        {!isCompleted && (
+          <>
+            <Text style={styles.sectionTitle}>Today's Tasks</Text>
+            <View style={styles.tasksList}>
+              {availableTasks.map((task) => {
+                const completed = isTaskCompleted(task.id);
+                return (
+                  <TouchableOpacity
+                    key={task.id}
+                    style={[styles.taskCard, completed && styles.taskCardCompleted]}
+                    onPress={() => onToggleTask(pillarId, task.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View
                       style={[
-                        styles.taskName,
-                        completed && styles.taskNameCompleted,
+                        styles.taskCheckbox,
+                        completed && styles.taskCheckboxCompleted,
                       ]}
                     >
-                      {task.name}
-                    </Text>
-                    {task.unlockedDay > 1 && (
-                      <View style={styles.weekBadge}>
-                        <Text style={styles.weekBadgeText}>
-                          Week {getWeekFromDay(task.unlockedDay)}
+                      {completed && (
+                        <MaterialIcons
+                          name="check"
+                          size={16}
+                          color={colors.textInverse}
+                        />
+                      )}
+                    </View>
+                    <View style={styles.taskContent}>
+                      <View style={styles.taskHeader}>
+                        <Text
+                          style={[
+                            styles.taskName,
+                            completed && styles.taskNameCompleted,
+                          ]}
+                        >
+                          {task.name}
                         </Text>
+                        {task.phase > 1 && (
+                          <View style={styles.weekBadge}>
+                            <Text style={styles.weekBadgeText}>
+                              Phase {task.phase}
+                            </Text>
+                          </View>
+                        )}
                       </View>
-                    )}
-                  </View>
-                  <Text
-                    style={[
-                      styles.taskDescription,
-                      completed && styles.taskDescriptionCompleted,
-                    ]}
-                  >
-                    {task.description}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                      <Text
+                        style={[
+                          styles.taskDescription,
+                          completed && styles.taskDescriptionCompleted,
+                        ]}
+                      >
+                        {task.description}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        )}
 
         {/* Locked Tasks Preview */}
         {lockedTasks.length > 0 && (
@@ -271,7 +359,7 @@ export const ChallengeDetail = ({
                           color={colors.gray[500]}
                         />
                         <Text style={styles.unlockBadgeText}>
-                          Day {task.unlockedDay}
+                          Phase {task.phase}
                         </Text>
                       </View>
                     </View>
@@ -285,53 +373,52 @@ export const ChallengeDetail = ({
           </>
         )}
 
-        {/* Weekly Breakdown */}
-        <Text style={styles.sectionTitle}>Weekly Progression</Text>
+        {/* Phase Progression */}
+        <Text style={styles.sectionTitle}>Phase Progression</Text>
         <View style={styles.weeklyBreakdown}>
-          {[1, 2, 3, 4].map((week) => {
-            const isCurrentWeek = week === currentWeek;
-            const isPastWeek = week < currentWeek;
-            const taskCount = week;
+          {CHALLENGE_PHASES.map(({ phase, taskCount, focus }) => {
+            const isCurrentPhase = phase === currentPhase && !isCompleted;
+            const isPastPhase = currentPhase > phase || isCompleted;
             return (
               <View
-                key={week}
+                key={phase}
                 style={[
                   styles.weekItem,
-                  isCurrentWeek && styles.weekItemCurrent,
-                  isPastWeek && styles.weekItemPast,
+                  isCurrentPhase && styles.weekItemCurrent,
+                  isPastPhase && styles.weekItemPast,
                 ]}
               >
                 <View
                   style={[
                     styles.weekNumber,
-                    isCurrentWeek && styles.weekNumberCurrent,
-                    isPastWeek && styles.weekNumberPast,
+                    isCurrentPhase && styles.weekNumberCurrent,
+                    isPastPhase && styles.weekNumberPast,
                   ]}
                 >
-                  {isPastWeek ? (
+                  {isPastPhase ? (
                     <MaterialIcons
                       name="check"
                       size={14}
-                      color={colors.black}
+                      color={colors.textInverse}
                     />
                   ) : (
                     <Text
                       style={[
                         styles.weekNumberText,
-                        isCurrentWeek && styles.weekNumberTextCurrent,
+                        isCurrentPhase && styles.weekNumberTextCurrent,
                       ]}
                     >
-                      {week}
+                      {phase}
                     </Text>
                   )}
                 </View>
                 <Text
                   style={[
                     styles.weekLabel,
-                    isCurrentWeek && styles.weekLabelCurrent,
+                    isCurrentPhase && styles.weekLabelCurrent,
                   ]}
                 >
-                  Week {week}
+                  {focus}
                 </Text>
                 <Text style={styles.weekTasks}>
                   {taskCount} task{taskCount > 1 ? "s" : ""}
@@ -340,6 +427,36 @@ export const ChallengeDetail = ({
             );
           })}
         </View>
+
+        {/* Milestone Timeline */}
+        <Text style={styles.sectionTitle}>Milestones</Text>
+        <View style={styles.milestoneList}>
+          {[
+            { day: 5, icon: "emoji-emotions", label: "Encouragement", reached: currentDay >= 5 },
+            { day: 10, icon: "play-circle-filled", label: "Coach Al Video", reached: currentDay >= 10 },
+            { day: 15, icon: "local-offer", label: "15% Discount", reached: currentDay >= 15 },
+            { day: 21, icon: "card-giftcard", label: "Free Session Reward", reached: currentDay >= 21 },
+          ].map((milestone, idx) => (
+            <View key={idx} style={[styles.milestoneItem, milestone.reached && styles.milestoneReached]}>
+              <View style={[styles.milestoneIcon, milestone.reached && styles.milestoneIconReached]}>
+                <MaterialIcons
+                  name={milestone.icon}
+                  size={16}
+                  color={milestone.reached ? colors.textInverse : colors.gray[600]}
+                />
+              </View>
+              <View style={styles.milestoneContent}>
+                <Text style={[styles.milestoneLabel, milestone.reached && styles.milestoneLabelReached]}>
+                  Day {milestone.day}
+                </Text>
+                <Text style={styles.milestoneDesc}>{milestone.label}</Text>
+              </View>
+              {milestone.reached && (
+                <MaterialIcons name="check-circle" size={16} color={colors.primary} />
+              )}
+            </View>
+          ))}
+        </View>
       </ScrollView>
 
       <BottomNav currentScreen="CHALLENGE_DETAIL" onNavigate={onNavigate} />
@@ -347,10 +464,10 @@ export const ChallengeDetail = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
@@ -358,7 +475,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.05)",
+    borderBottomColor: colors.divider,
   },
   backButton: {
     width: 40,
@@ -370,7 +487,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
   },
   content: {
     flex: 1,
@@ -380,7 +497,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   progressCard: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 24,
     borderWidth: 2,
@@ -407,7 +524,7 @@ const styles = StyleSheet.create({
   progressTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
   },
   progressWeek: {
     fontSize: 14,
@@ -423,7 +540,7 @@ const styles = StyleSheet.create({
   dayBadgeText: {
     fontSize: 12,
     fontWeight: "700",
-    color: colors.black,
+    color: colors.textInverse,
   },
   progressBarContainer: {
     flexDirection: "row",
@@ -433,7 +550,7 @@ const styles = StyleSheet.create({
   progressBarBg: {
     flex: 1,
     height: 8,
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: colors.overlay,
     borderRadius: 4,
     overflow: "hidden",
     marginRight: 12,
@@ -462,7 +579,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
     marginTop: 4,
   },
   statLabel: {
@@ -475,7 +592,109 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
     height: 40,
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: colors.overlay,
+  },
+  // Day 21 celebration
+  celebrationCard: {
+    backgroundColor: `${colors.warning}10`,
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 2,
+    borderColor: `${colors.warning}40`,
+    marginBottom: 24,
+  },
+  celebrationHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 16,
+  },
+  celebrationTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: colors.warning,
+  },
+  cherryOnTopCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.divider,
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
+    marginBottom: 16,
+  },
+  cherryOnTopContent: {
+    flex: 1,
+  },
+  cherryOnTopName: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.text,
+    marginBottom: 4,
+  },
+  cherryOnTopDesc: {
+    fontSize: 13,
+    color: colors.gray[400],
+    lineHeight: 18,
+  },
+  rewardsSection: {
+    marginBottom: 16,
+  },
+  rewardsTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.text,
+    marginBottom: 10,
+  },
+  rewardItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 8,
+  },
+  rewardText: {
+    fontSize: 14,
+    color: colors.gray[300],
+    flex: 1,
+  },
+  scheduleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.primary,
+    borderRadius: 14,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  scheduleButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colors.textInverse,
+  },
+  // Trigger cards
+  triggerCard: {
+    flexDirection: "row",
+    backgroundColor: `${colors.primary}10`,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: `${colors.primary}25`,
+    marginBottom: 20,
+    gap: 12,
+  },
+  triggerContent: {
+    flex: 1,
+  },
+  triggerLabel: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  triggerText: {
+    fontSize: 13,
+    color: colors.gray[400],
+    lineHeight: 18,
   },
   completedBanner: {
     flexDirection: "row",
@@ -497,7 +716,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
     marginBottom: 16,
   },
   tasksList: {
@@ -506,11 +725,11 @@ const styles = StyleSheet.create({
   },
   taskCard: {
     flexDirection: "row",
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
+    borderColor: colors.divider,
   },
   taskCardCompleted: {
     backgroundColor: `${colors.primary}15`,
@@ -542,14 +761,14 @@ const styles = StyleSheet.create({
   taskName: {
     fontSize: 16,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
     flex: 1,
   },
   taskNameCompleted: {
     color: colors.primary,
   },
   weekBadge: {
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: colors.overlay,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
@@ -570,18 +789,18 @@ const styles = StyleSheet.create({
   },
   lockedTaskCard: {
     flexDirection: "row",
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
+    borderColor: colors.divider,
     opacity: 0.5,
   },
   lockedTaskCheckbox: {
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: colors.divider,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -600,7 +819,7 @@ const styles = StyleSheet.create({
   unlockBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: colors.divider,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
@@ -619,12 +838,12 @@ const styles = StyleSheet.create({
   },
   weekItem: {
     flex: 1,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 16,
-    padding: 16,
+    padding: 12,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
+    borderColor: colors.divider,
   },
   weekItemCurrent: {
     borderColor: colors.primary,
@@ -637,10 +856,10 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: colors.overlay,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   weekNumberCurrent: {
     backgroundColor: `${colors.primary}30`,
@@ -657,17 +876,64 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   weekLabel: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "600",
     color: colors.gray[500],
+    textAlign: "center",
   },
   weekLabelCurrent: {
-    color: colors.white,
+    color: colors.text,
   },
   weekTasks: {
-    fontSize: 10,
+    fontSize: 9,
     color: colors.gray[600],
-    marginTop: 4,
+    marginTop: 3,
+  },
+  // Milestone timeline
+  milestoneList: {
+    gap: 10,
+    marginBottom: 24,
+  },
+  milestoneItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    gap: 12,
+  },
+  milestoneReached: {
+    borderColor: `${colors.primary}30`,
+    backgroundColor: `${colors.primary}08`,
+  },
+  milestoneIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: colors.overlay,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  milestoneIconReached: {
+    backgroundColor: colors.primary,
+  },
+  milestoneContent: {
+    flex: 1,
+  },
+  milestoneLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.gray[500],
+  },
+  milestoneLabelReached: {
+    color: colors.text,
+  },
+  milestoneDesc: {
+    fontSize: 11,
+    color: colors.gray[600],
+    marginTop: 1,
   },
   // Dev mode styles
   devPanel: {
@@ -691,13 +957,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   devWeekButton: {
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: colors.overlay,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: colors.overlay,
   },
   devWeekButtonActive: {
     backgroundColor: `${colors.primary}30`,

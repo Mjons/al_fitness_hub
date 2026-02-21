@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -7,10 +7,13 @@ import {
   StyleSheet,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { colors } from "../styles/theme";
+import { useTheme } from "../styles/ThemeContext";
 import { BOOK_CHAPTERS } from "../constants";
 
 export const ChapterView = ({ chapterId, onNavigate, onMarkRead, isRead }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const scrollRef = useRef(null);
   const chapter = BOOK_CHAPTERS.find((ch) => ch.id === chapterId);
   const chapterIndex = BOOK_CHAPTERS.findIndex((ch) => ch.id === chapterId);
@@ -28,7 +31,7 @@ export const ChapterView = ({ chapterId, onNavigate, onMarkRead, isRead }) => {
             style={styles.backButton}
             onPress={() => onNavigate("BOOK")}
           >
-            <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+            <MaterialIcons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Error</Text>
           <View style={{ width: 40 }} />
@@ -70,7 +73,7 @@ export const ChapterView = ({ chapterId, onNavigate, onMarkRead, isRead }) => {
           style={styles.backButton}
           onPress={() => onNavigate("BOOK")}
         >
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerChapter}>Chapter {chapterIndex + 1}</Text>
@@ -135,7 +138,7 @@ export const ChapterView = ({ chapterId, onNavigate, onMarkRead, isRead }) => {
             onPress={() => onMarkRead(chapterId, true)}
             activeOpacity={0.8}
           >
-            <MaterialIcons name="check-circle" size={24} color={colors.black} />
+            <MaterialIcons name="check-circle" size={24} color={colors.textInverse} />
             <Text style={styles.markReadText}>Mark Chapter as Read</Text>
           </TouchableOpacity>
         )}
@@ -214,10 +217,10 @@ export const ChapterView = ({ chapterId, onNavigate, onMarkRead, isRead }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
@@ -225,13 +228,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.surfaceDark,
+    borderBottomColor: colors.surface,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -250,14 +253,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: colors.white,
+    color: colors.text,
     marginTop: 2,
   },
   bookmarkButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -276,7 +279,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     paddingBottom: 24,
     borderBottomWidth: 1,
-    borderBottomColor: colors.surfaceDark,
+    borderBottomColor: colors.surface,
   },
   chapterIcon: {
     width: 64,
@@ -290,7 +293,7 @@ const styles = StyleSheet.create({
   chapterTitle: {
     fontSize: 28,
     fontWeight: "800",
-    color: colors.white,
+    color: colors.text,
     textAlign: "center",
   },
   chapterSubtitle: {
@@ -319,7 +322,7 @@ const styles = StyleSheet.create({
   sectionHeading: {
     fontSize: 20,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
     marginBottom: 12,
   },
   sectionContent: {
@@ -341,7 +344,7 @@ const styles = StyleSheet.create({
   markReadText: {
     fontSize: 16,
     fontWeight: "700",
-    color: colors.black,
+    color: colors.textInverse,
   },
   completedBadge: {
     flexDirection: "row",
@@ -371,7 +374,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     padding: 14,
     borderRadius: 12,
     gap: 8,
@@ -398,7 +401,7 @@ const styles = StyleSheet.create({
   navTitle: {
     fontSize: 13,
     fontWeight: "600",
-    color: colors.white,
+    color: colors.text,
     marginTop: 2,
   },
   navFinishText: {
@@ -432,7 +435,7 @@ const styles = StyleSheet.create({
   errorButtonText: {
     fontSize: 16,
     fontWeight: "700",
-    color: colors.black,
+    color: colors.textInverse,
   },
   errorButtonSecondary: {
     paddingHorizontal: 24,
@@ -442,10 +445,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: colors.gray[400],
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.white,
   },
 });

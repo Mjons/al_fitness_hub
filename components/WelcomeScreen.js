@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -8,12 +8,16 @@ import {
   StyleSheet,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { colors, spacing, borderRadius, fontSize } from "../styles/theme";
+import { spacing, borderRadius, fontSize } from "../styles/theme";
+import { useTheme } from "../styles/ThemeContext";
 
 // DEV_MODE: Set to false to hide the random fill button
 const DEV_MODE = true;
 
 export const WelcomeScreen = ({ onNext, onRandomFill }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const features = [
     {
       title: "7 Pillars of Health",
@@ -131,10 +135,10 @@ export const WelcomeScreen = ({ onNext, onRandomFill }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
@@ -153,7 +157,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 18,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
   },
   content: {
     flex: 1,
@@ -171,7 +175,7 @@ const styles = StyleSheet.create({
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
     opacity: 0.5,
   },
   heroBadge: {
@@ -196,7 +200,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: "800",
-    color: colors.white,
+    color: colors.text,
     lineHeight: 38,
   },
   subtitle: {
@@ -213,7 +217,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
     marginBottom: 16,
   },
   featureCard: {
@@ -239,7 +243,7 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
     marginTop: 12,
   },
   featureDesc: {
@@ -266,7 +270,7 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: colors.backgroundDark,
+    borderColor: colors.background,
   },
   socialText: {
     fontSize: 14,
@@ -284,7 +288,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: "700",
-    color: colors.black,
+    color: colors.textInverse,
   },
   devButton: {
     flexDirection: "row",

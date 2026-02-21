@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,15 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors } from '../styles/theme';
+import { useTheme } from '../styles/ThemeContext';
 
-export const IntakeGoals = ({ onNext, onBack }) => {
-  const [selectedGoals, setSelectedGoals] = useState([]);
-  const [experience, setExperience] = useState(null);
+export const IntakeGoals = ({ onNext, onBack, initialData }) => {
+  const { colors, isDark, toggleTheme } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const [selectedGoals, setSelectedGoals] = useState(initialData?.selectedGoals || []);
+  const [experience, setExperience] = useState(initialData?.experience ?? null);
+  const [injuries, setInjuries] = useState(initialData?.injuries || '');
 
   const toggleGoal = (id) => {
     setSelectedGoals((prev) =>
@@ -39,10 +43,12 @@ export const IntakeGoals = ({ onNext, onBack }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.stepText}>Step 3 of 7</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
+          <MaterialIcons name={isDark ? "light-mode" : "dark-mode"} size={20} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.progressContainer}>
@@ -71,7 +77,7 @@ export const IntakeGoals = ({ onNext, onBack }) => {
                   <MaterialIcons
                     name={goal.icon}
                     size={32}
-                    color={isActive ? colors.black : colors.gray[500]}
+                    color={isActive ? colors.textInverse : colors.gray[500]}
                   />
                 </View>
                 <View style={styles.goalContent}>
@@ -82,7 +88,7 @@ export const IntakeGoals = ({ onNext, onBack }) => {
                 </View>
                 <View style={[styles.checkbox, isActive && styles.checkboxActive]}>
                   {isActive && (
-                    <MaterialIcons name="check" size={16} color={colors.black} />
+                    <MaterialIcons name="check" size={16} color={colors.textInverse} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -136,6 +142,8 @@ export const IntakeGoals = ({ onNext, onBack }) => {
             multiline
             numberOfLines={5}
             textAlignVertical="top"
+            value={injuries}
+            onChangeText={setInjuries}
           />
         </View>
       </ScrollView>
@@ -143,7 +151,7 @@ export const IntakeGoals = ({ onNext, onBack }) => {
       <View style={styles.footer}>
         <TouchableOpacity
           style={[styles.button, !isFormValid && styles.buttonDisabled]}
-          onPress={onNext}
+          onPress={() => onNext(selectedGoals, experience, injuries)}
           disabled={!isFormValid}
           activeOpacity={0.8}
         >
@@ -153,7 +161,7 @@ export const IntakeGoals = ({ onNext, onBack }) => {
           <MaterialIcons
             name="arrow-forward"
             size={20}
-            color={isFormValid ? colors.black : colors.gray[600]}
+            color={isFormValid ? colors.textInverse : colors.gray[600]}
           />
         </TouchableOpacity>
       </View>
@@ -161,10 +169,10 @@ export const IntakeGoals = ({ onNext, onBack }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -173,6 +181,13 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeToggle: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -192,7 +207,7 @@ const styles = StyleSheet.create({
   },
   progressBg: {
     height: 6,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.overlay,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -211,7 +226,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '900',
-    color: colors.white,
+    color: colors.text,
     lineHeight: 38,
   },
   subtitle: {
@@ -226,7 +241,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 24,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -240,7 +255,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.overlayLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -256,7 +271,7 @@ const styles = StyleSheet.create({
     color: colors.gray[300],
   },
   goalLabelActive: {
-    color: colors.white,
+    color: colors.text,
   },
   goalSub: {
     fontSize: 12,
@@ -285,7 +300,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 24,
     fontWeight: '900',
-    color: colors.white,
+    color: colors.text,
   },
   sectionSubtitle: {
     fontSize: 14,
@@ -301,7 +316,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -314,7 +329,7 @@ const styles = StyleSheet.create({
   expIcon: {
     padding: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.overlayLight,
   },
   expIconActive: {
     backgroundColor: `${colors.primary}20`,
@@ -328,7 +343,7 @@ const styles = StyleSheet.create({
     color: colors.gray[300],
   },
   expLabelActive: {
-    color: colors.white,
+    color: colors.text,
   },
   expSub: {
     fontSize: 12,
@@ -359,12 +374,12 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   textarea: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     fontSize: 18,
     fontWeight: '500',
-    color: colors.white,
+    color: colors.text,
     minHeight: 140,
     marginTop: 12,
     borderWidth: 2,
@@ -384,15 +399,15 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   buttonDisabled: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.overlayLight,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.overlayLight,
     opacity: 0.5,
   },
   buttonText: {
     fontSize: 18,
     fontWeight: '900',
-    color: colors.black,
+    color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 2,
   },

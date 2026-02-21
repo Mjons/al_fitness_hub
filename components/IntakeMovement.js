@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,18 +8,21 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
-import { colors } from '../styles/theme';
+import { useTheme } from '../styles/ThemeContext';
 
-export const IntakeMovement = ({ onNext, onBack }) => {
-  const [steps, setSteps] = useState(6000);
-  const [freq, setFreq] = useState(1);
-  const [cardioFreq, setCardioFreq] = useState(1);
-  const [level, setLevel] = useState('Low');
+export const IntakeMovement = ({ onNext, onBack, initialData }) => {
+  const { colors, isDark, toggleTheme } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  const [unsureSteps, setUnsureSteps] = useState(false);
-  const [unsureFreq, setUnsureFreq] = useState(false);
-  const [unsureCardio, setUnsureCardio] = useState(false);
-  const [unsureLevel, setUnsureLevel] = useState(false);
+  const [steps, setSteps] = useState(initialData?.steps ?? 6000);
+  const [freq, setFreq] = useState(initialData?.freq ?? 1);
+  const [cardioFreq, setCardioFreq] = useState(initialData?.cardioFreq ?? 1);
+  const [level, setLevel] = useState(initialData?.level ?? 'Low');
+
+  const [unsureSteps, setUnsureSteps] = useState(initialData?.unsureSteps ?? false);
+  const [unsureFreq, setUnsureFreq] = useState(initialData?.unsureFreq ?? false);
+  const [unsureCardio, setUnsureCardio] = useState(initialData?.unsureCardio ?? false);
+  const [unsureLevel, setUnsureLevel] = useState(initialData?.unsureLevel ?? false);
 
   const calculateScore = () => {
     let score = 0;
@@ -45,10 +48,12 @@ export const IntakeMovement = ({ onNext, onBack }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.stepText}>Step 4 of 7</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
+          <MaterialIcons name={isDark ? "light-mode" : "dark-mode"} size={20} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.progressContainer}>
@@ -190,21 +195,21 @@ export const IntakeMovement = ({ onNext, onBack }) => {
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => onNext(calculateScore())}
+          onPress={() => onNext(calculateScore(), { steps, freq, cardioFreq, level, unsureSteps, unsureFreq, unsureCardio, unsureLevel })}
           activeOpacity={0.8}
         >
           <Text style={styles.buttonText}>Continue</Text>
-          <MaterialIcons name="arrow-forward" size={20} color={colors.black} />
+          <MaterialIcons name="arrow-forward" size={20} color={colors.textInverse} />
         </TouchableOpacity>
       </View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -213,6 +218,13 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeToggle: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -232,7 +244,7 @@ const styles = StyleSheet.create({
   },
   progressBg: {
     height: 6,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.overlay,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -248,17 +260,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '900',
-    color: colors.white,
-    marginBottom: 32,
+    color: colors.text,
+    marginBottom: 20,
   },
   section: {
-    marginBottom: 40,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   sectionLabel: {
     fontSize: 12,
@@ -291,15 +303,15 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   sliderCard: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 16,
-    padding: 24,
+    padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.divider,
     alignItems: 'center',
   },
   stepsValue: {
-    fontSize: 48,
+    fontSize: 36,
     fontWeight: '900',
     color: colors.primary,
     fontVariant: ['tabular-nums'],
@@ -307,7 +319,7 @@ const styles = StyleSheet.create({
   slider: {
     width: '100%',
     height: 40,
-    marginTop: 16,
+    marginTop: 8,
   },
   sliderLabels: {
     flexDirection: 'row',
@@ -323,11 +335,11 @@ const styles = StyleSheet.create({
   },
   freqContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.divider,
   },
   freqButton: {
     flex: 1,
@@ -345,7 +357,7 @@ const styles = StyleSheet.create({
     color: colors.gray[500],
   },
   freqValueActive: {
-    color: colors.black,
+    color: colors.textInverse,
   },
   freqLabel: {
     fontSize: 8,
@@ -354,7 +366,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   freqLabelActive: {
-    color: colors.black,
+    color: colors.textInverse,
   },
   levelContainer: {
     flexDirection: 'row',
@@ -363,7 +375,7 @@ const styles = StyleSheet.create({
   levelButton: {
     flex: 1,
     paddingVertical: 16,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -397,7 +409,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     fontWeight: '900',
-    color: colors.black,
+    color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 2,
   },

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,19 +8,24 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors } from '../styles/theme';
+import { useTheme } from '../styles/ThemeContext';
 
 export const SafetyNotice = ({ onNext, onBack }) => {
+  const { colors, isDark, toggleTheme } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [accepted, setAccepted] = useState(false);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Safety Notice</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
+          <MaterialIcons name={isDark ? "light-mode" : "dark-mode"} size={20} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -57,7 +62,10 @@ export const SafetyNotice = ({ onNext, onBack }) => {
         </View>
 
         <View style={styles.disclaimerCard}>
-          <Text style={styles.disclaimerTitle}>Legal Disclaimer</Text>
+          <View style={styles.disclaimerTitleRow}>
+            <MaterialIcons name="gavel" size={18} color={colors.warning} />
+            <Text style={styles.disclaimerTitle}>Legal Disclaimer</Text>
+          </View>
           <Text style={styles.disclaimerText}>
             Coach Al's program is designed for educational and lifestyle purposes only.
           </Text>
@@ -77,7 +85,7 @@ export const SafetyNotice = ({ onNext, onBack }) => {
         >
           <View style={[styles.checkbox, accepted && styles.checkboxActive]}>
             {accepted && (
-              <MaterialIcons name="check" size={16} color={colors.black} />
+              <MaterialIcons name="check" size={16} color={colors.textInverse} />
             )}
           </View>
           <Text style={styles.checkboxLabel}>
@@ -93,7 +101,7 @@ export const SafetyNotice = ({ onNext, onBack }) => {
           activeOpacity={0.8}
         >
           <Text style={styles.buttonText}>I Understand & Continue</Text>
-          <MaterialIcons name="arrow-forward" size={20} color={colors.black} />
+          <MaterialIcons name="arrow-forward" size={20} color={colors.textInverse} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.backLink} onPress={onBack}>
           <Text style={styles.backLinkText}>Go Back & Change Selection</Text>
@@ -103,10 +111,10 @@ export const SafetyNotice = ({ onNext, onBack }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -114,7 +122,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: colors.divider,
   },
   backButton: {
     width: 40,
@@ -126,7 +134,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
+  },
+  themeToggle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     flex: 1,
@@ -166,7 +181,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
     marginBottom: 8,
   },
   subtitle: {
@@ -177,11 +192,11 @@ const styles = StyleSheet.create({
   coachCard: {
     width: '100%',
     flexDirection: 'row',
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.divider,
     gap: 12,
     marginBottom: 16,
   },
@@ -197,7 +212,7 @@ const styles = StyleSheet.create({
   coachName: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
   },
   coachMessage: {
     fontSize: 12,
@@ -212,16 +227,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.divider,
     marginBottom: 24,
   },
+  disclaimerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
   disclaimerTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.gray[500],
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.warning,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: 12,
   },
   disclaimerText: {
     fontSize: 12,
@@ -257,7 +277,7 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.05)',
+    borderTopColor: colors.divider,
     gap: 12,
   },
   button: {
@@ -272,7 +292,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.black,
+    color: colors.textInverse,
   },
   backLink: {
     height: 48,

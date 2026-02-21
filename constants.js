@@ -138,8 +138,9 @@ export const FAVORITE_MEALS = [
   },
 ];
 
-// 30-Day Pillar Challenges
-export const THIRTY_DAY_CHALLENGES = {
+// 21-Day Pillar Challenges
+// 4 phases (5 days each) + Day 21 celebration
+export const TWENTY_ONE_DAY_CHALLENGES = {
   breathing: {
     name: "Breathing",
     icon: "air",
@@ -149,26 +150,30 @@ export const THIRTY_DAY_CHALLENGES = {
         name: "Morning Breath Check",
         description: "Take 5 deep belly breaths upon waking",
         unlockedDay: 1,
+        phase: 1,
       },
       {
         id: "stress_reset",
         name: "Stress Reset",
         description:
           "4-7-8 breathing when stressed (inhale 4s, hold 7s, exhale 8s)",
-        unlockedDay: 8,
+        unlockedDay: 6,
+        phase: 2,
       },
       {
         id: "box_breathing",
         name: "Box Breathing Break",
         description:
           "5-minute box breathing during lunch (4s inhale, 4s hold, 4s exhale, 4s hold)",
-        unlockedDay: 15,
+        unlockedDay: 11,
+        phase: 3,
       },
       {
         id: "evening_wind",
         name: "Evening Wind-Down",
         description: "10 slow breaths before bed, extending exhale",
-        unlockedDay: 22,
+        unlockedDay: 16,
+        phase: 4,
       },
     ],
   },
@@ -181,25 +186,29 @@ export const THIRTY_DAY_CHALLENGES = {
         name: "Consistent Wake Time",
         description: "Wake up at the same time every day (within 30 min)",
         unlockedDay: 1,
+        phase: 1,
       },
       {
         id: "screen_curfew",
         name: "Screen Curfew",
         description: "No screens 30 minutes before bed",
-        unlockedDay: 8,
+        unlockedDay: 6,
+        phase: 2,
       },
       {
         id: "cool_dark",
         name: "Cool & Dark",
         description: "Bedroom temp below 68°F, blackout conditions",
-        unlockedDay: 15,
+        unlockedDay: 11,
+        phase: 3,
       },
       {
         id: "wind_down_ritual",
         name: "Wind-Down Ritual",
         description:
           "15-min relaxation routine (reading, stretching, journaling)",
-        unlockedDay: 22,
+        unlockedDay: 16,
+        phase: 4,
       },
     ],
   },
@@ -212,24 +221,28 @@ export const THIRTY_DAY_CHALLENGES = {
         name: "Morning Hydration",
         description: "Drink 16oz water within 30 min of waking",
         unlockedDay: 1,
+        phase: 1,
       },
       {
         id: "water_tracking",
         name: "Water Tracking",
         description: "Log and drink at least 64oz total daily",
-        unlockedDay: 8,
+        unlockedDay: 6,
+        phase: 2,
       },
       {
         id: "electrolyte_balance",
         name: "Electrolyte Balance",
         description: "Add electrolytes or mineral-rich water once daily",
-        unlockedDay: 15,
+        unlockedDay: 11,
+        phase: 3,
       },
       {
         id: "pre_meal_hydration",
         name: "Pre-Meal Hydration",
         description: "Drink 8oz water 15 min before each meal",
-        unlockedDay: 22,
+        unlockedDay: 16,
+        phase: 4,
       },
     ],
   },
@@ -242,24 +255,28 @@ export const THIRTY_DAY_CHALLENGES = {
         name: "Protein First",
         description: "Eat protein within 1 hour of waking",
         unlockedDay: 1,
+        phase: 1,
       },
       {
         id: "eat_rainbow",
         name: "Eat the Rainbow",
         description: "Include 3+ colors of vegetables daily",
-        unlockedDay: 8,
+        unlockedDay: 6,
+        phase: 2,
       },
       {
         id: "mindful_eating",
         name: "Mindful Eating",
         description: "No screens during at least one meal, chew thoroughly",
-        unlockedDay: 15,
+        unlockedDay: 11,
+        phase: 3,
       },
       {
         id: "fiber_focus",
         name: "Fiber Focus",
         description: "Aim for 25-30g fiber (track one day per week)",
-        unlockedDay: 22,
+        unlockedDay: 16,
+        phase: 4,
       },
     ],
   },
@@ -271,27 +288,31 @@ export const THIRTY_DAY_CHALLENGES = {
         id: "daily_walk",
         name: "Daily Walk",
         description:
-          "Walk for at least 10 minutes outdoors (15 min Week 2, 20 min Week 3+)",
+          "Walk for at least 10 minutes outdoors (15 min Phase 2, 20 min Phase 3+)",
         unlockedDay: 1,
+        phase: 1,
       },
       {
         id: "movement_snacks",
         name: "Movement Snacks",
         description:
           "3 micro-movements throughout the day (squats, stretches, stairs)",
-        unlockedDay: 8,
+        unlockedDay: 6,
+        phase: 2,
       },
       {
         id: "strength_session",
         name: "Strength Session",
         description: "2x per week bodyweight or resistance training (15+ min)",
-        unlockedDay: 15,
+        unlockedDay: 11,
+        phase: 3,
       },
       {
         id: "mobility_work",
         name: "Mobility Work",
         description: "5-10 min daily stretching or yoga",
-        unlockedDay: 22,
+        unlockedDay: 16,
+        phase: 4,
       },
     ],
   },
@@ -304,24 +325,28 @@ export const THIRTY_DAY_CHALLENGES = {
         name: "Morning Light",
         description: "Get 10 min of natural sunlight within 1 hour of waking",
         unlockedDay: 1,
+        phase: 1,
       },
       {
         id: "declutter_zone",
         name: "Declutter Zone",
         description: "Spend 5 min tidying one area of your space",
-        unlockedDay: 8,
+        unlockedDay: 6,
+        phase: 2,
       },
       {
         id: "nature_time",
         name: "Nature Time",
         description: "Spend 20+ minutes in nature (park, garden, trail)",
-        unlockedDay: 15,
+        unlockedDay: 11,
+        phase: 3,
       },
       {
         id: "digital_detox",
         name: "Digital Detox",
         description: "1 hour phone-free time in the evening",
-        unlockedDay: 22,
+        unlockedDay: 16,
+        phase: 4,
       },
     ],
   },
@@ -334,41 +359,144 @@ export const THIRTY_DAY_CHALLENGES = {
         name: "Gratitude Moment",
         description: "Write or think of 3 things you're grateful for",
         unlockedDay: 1,
+        phase: 1,
       },
       {
         id: "mindful_minute",
         name: "Mindful Minute",
         description:
-          "1-5 minutes of present-moment awareness (Week 2: 1 min, Week 3+: 5 min)",
-        unlockedDay: 8,
+          "1-5 minutes of present-moment awareness (Phase 2: 1 min, Phase 3+: 5 min)",
+        unlockedDay: 6,
+        phase: 2,
       },
       {
         id: "reflection_check",
         name: "Reflection Check",
         description: "End-of-day reflection: What went well? What to improve?",
-        unlockedDay: 15,
+        unlockedDay: 11,
+        phase: 3,
       },
       {
         id: "intention_setting",
         name: "Intention Setting",
         description: "Set one clear intention each morning",
-        unlockedDay: 22,
+        unlockedDay: 16,
+        phase: 4,
       },
     ],
   },
 };
 
-// Helper function to get current week from day
-export const getWeekFromDay = (day) => {
-  if (day <= 7) return 1;
-  if (day <= 14) return 2;
-  if (day <= 21) return 3;
-  return 4;
+// Backward compat alias
+export const THIRTY_DAY_CHALLENGES = TWENTY_ONE_DAY_CHALLENGES;
+
+// Phase structure
+export const CHALLENGE_PHASES = [
+  { phase: 1, days: "1-5", taskCount: 1, focus: "Foundation", label: "Build the core habit" },
+  { phase: 2, days: "6-10", taskCount: 2, focus: "Expansion", label: "Add complementary habit" },
+  { phase: 3, days: "11-15", taskCount: 3, focus: "Deepening", label: "Increase complexity" },
+  { phase: 4, days: "16-20", taskCount: 4, focus: "Mastery", label: "Full daily practice" },
+];
+
+// Day 21 "Cherry on Top" capstone challenges per pillar
+export const DAY_21_CHALLENGES = {
+  breathing: {
+    name: "The 20-Minute Breath Journey",
+    description: "Extended breathwork creates a profound state shift you'll want to explore further.",
+    icon: "self-improvement",
+  },
+  sleep: {
+    name: "The Sleep Sanctuary Reset",
+    description: "Transform your space — make the habit tangible and permanent.",
+    icon: "king-bed",
+  },
+  hydration: {
+    name: "The Hydration Awareness Day",
+    description: "Full-day tracking reveals how far you've come.",
+    icon: "water",
+  },
+  nutrition: {
+    name: "The Celebration Meal",
+    description: "Cook a nourishing meal that connects emotion to nutrition.",
+    icon: "dinner-dining",
+  },
+  movement: {
+    name: "The Personal Record Day",
+    description: "Achieve a PR — build confidence to push further with coaching.",
+    icon: "fitness-center",
+  },
+  environment: {
+    name: "The Digital Sunset",
+    description: "A full evening unplugged shows you what's possible.",
+    icon: "wb-twilight",
+  },
+  mindfulness: {
+    name: "The Silent Hour",
+    description: "Extended mindfulness opens the door to deeper practice.",
+    icon: "spa",
+  },
 };
+
+// Day 21 rewards for completing the challenge
+export const DAY_21_REWARDS = [
+  "Free Behavior Framework Call with Coach Al",
+  "Free 1-Hour Training Session with Al",
+];
+
+// Challenge trigger milestones
+export const CHALLENGE_TRIGGERS = {
+  phase1: {
+    triggerDay: 5,
+    type: "encouragement",
+    icon: "emoji-emotions",
+  },
+  phase2: {
+    triggerDay: 10,
+    type: "video",
+    icon: "play-circle-filled",
+    label: "Mid-Challenge Video from Coach Al",
+  },
+  phase3: {
+    triggerDay: 15,
+    type: "discount",
+    icon: "local-offer",
+    label: "15% Off Coaching",
+    discount: "15%",
+    code: "PILLAR15",
+  },
+  day21: {
+    triggerDay: 21,
+    type: "reward",
+    icon: "card-giftcard",
+  },
+};
+
+// Phase-specific encouragement messages per pillar
+export const PHASE_ENCOURAGEMENT = {
+  breathing: "You've committed 5 days to better breathing — your nervous system is already thanking you. Keep going!",
+  sleep: "5 days of consistent sleep habits! Your body is starting to reset its internal clock. Don't stop now.",
+  hydration: "You've hydrated intentionally for 5 straight days. Your energy and focus are already improving!",
+  nutrition: "5 days of fueling your body right! You're building a foundation for lasting energy.",
+  movement: "You've moved your body for 5 days in a row. The momentum is real — let's keep it rolling!",
+  environment: "5 days of shaping your environment. You're proving that small changes create big shifts.",
+  mindfulness: "5 days of mindful awareness. You're rewiring your brain for calm and clarity. Beautiful work!",
+};
+
+// Helper function to get current phase from day
+export const getPhaseFromDay = (day) => {
+  if (day <= 5) return 1;
+  if (day <= 10) return 2;
+  if (day <= 15) return 3;
+  if (day <= 20) return 4;
+  return 5; // Day 21 — celebration
+};
+
+// Keep backward compat
+export const getWeekFromDay = getPhaseFromDay;
 
 // Helper function to get available tasks for a given day
 export const getAvailableTasks = (pillarId, currentDay) => {
-  const challenge = THIRTY_DAY_CHALLENGES[pillarId];
+  const challenge = TWENTY_ONE_DAY_CHALLENGES[pillarId];
   if (!challenge) return [];
   return challenge.tasks.filter((task) => task.unlockedDay <= currentDay);
 };
@@ -605,7 +733,7 @@ export const BOOK_CHAPTERS = [
   {
     id: "conclusion",
     title: "Putting It Together",
-    subtitle: "Your 30-Day Transformation",
+    subtitle: "Your 21-Day Transformation",
     icon: "emoji-events",
     readTime: 5,
     sections: [
@@ -620,9 +748,9 @@ export const BOOK_CHAPTERS = [
           "Don't try to perfect all seven pillars at once. That's a recipe for overwhelm and failure. Instead, identify your weakest pillar—the one causing the most problems—and focus there first.\n\nMaster one pillar for 2-3 weeks until it becomes automatic, then add the next. This progressive approach builds sustainable habits rather than temporary motivation.",
       },
       {
-        heading: "The 30-Day Challenge",
+        heading: "The 21-Day Challenge",
         content:
-          "Use the 30-Day Challenges in this app to systematically improve each pillar. Week 1 introduces one simple habit. Each subsequent week adds complexity as the foundation solidifies.\n\nBy day 30, you'll have integrated 4 habits per pillar that work together synergistically. Complete all seven challenges, and you'll have transformed every aspect of your health.",
+          "Use the 21-Day Challenges in this app to systematically improve each pillar. Phase 1 introduces one simple habit. Each subsequent phase adds complexity as the foundation solidifies.\n\nBy day 21, you'll have integrated 4 habits per pillar that work together synergistically. Complete all seven challenges, and you'll have transformed every aspect of your health.",
       },
       {
         heading: "Your New Life Awaits",

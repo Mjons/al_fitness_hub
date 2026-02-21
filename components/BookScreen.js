@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { colors } from "../styles/theme";
+import { useTheme } from "../styles/ThemeContext";
 import { BOOK_CHAPTERS } from "../constants";
 import { BottomNav } from "./BottomNav";
 
@@ -16,6 +16,9 @@ export const BookScreen = ({
   onSelectChapter,
   readChapters = {},
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const totalReadTime = BOOK_CHAPTERS.reduce((sum, ch) => sum + ch.readTime, 0);
   const chaptersRead = Object.keys(readChapters).filter(
     (id) => readChapters[id],
@@ -31,7 +34,7 @@ export const BookScreen = ({
           style={styles.backButton}
           onPress={() => onNavigate("DASHBOARD")}
         >
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>The Book</Text>
         <View style={styles.placeholder} />
@@ -113,7 +116,7 @@ export const BookScreen = ({
                 ]}
               >
                 {isRead ? (
-                  <MaterialIcons name="check" size={18} color={colors.black} />
+                  <MaterialIcons name="check" size={18} color={colors.textInverse} />
                 ) : (
                   <Text style={styles.chapterNumberText}>{index + 1}</Text>
                 )}
@@ -150,7 +153,7 @@ export const BookScreen = ({
           <MaterialIcons name="emoji-events" size={32} color={colors.warning} />
           <Text style={styles.ctaTitle}>Put Knowledge Into Action</Text>
           <Text style={styles.ctaText}>
-            Start the 30-Day Challenges to practice what you learn.
+            Start the 21-Day Challenges to practice what you learn.
           </Text>
           <TouchableOpacity
             style={styles.ctaButton}
@@ -160,7 +163,7 @@ export const BookScreen = ({
             <MaterialIcons
               name="arrow-forward"
               size={16}
-              color={colors.black}
+              color={colors.textInverse}
             />
           </TouchableOpacity>
         </View>
@@ -171,10 +174,10 @@ export const BookScreen = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
@@ -186,14 +189,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
   },
   placeholder: {
     width: 40,
@@ -207,7 +210,7 @@ const styles = StyleSheet.create({
   },
   bookHeader: {
     flexDirection: "row",
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 20,
     marginBottom: 16,
@@ -230,7 +233,7 @@ const styles = StyleSheet.create({
   bookTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: colors.white,
+    color: colors.text,
     lineHeight: 22,
   },
   bookAuthor: {
@@ -253,7 +256,7 @@ const styles = StyleSheet.create({
     color: colors.gray[400],
   },
   progressCard: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -267,7 +270,7 @@ const styles = StyleSheet.create({
   progressTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: colors.white,
+    color: colors.text,
   },
   progressPercent: {
     fontSize: 14,
@@ -293,13 +296,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
     marginBottom: 12,
   },
   chapterCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 10,
@@ -331,7 +334,7 @@ const styles = StyleSheet.create({
   chapterTitle: {
     fontSize: 15,
     fontWeight: "600",
-    color: colors.white,
+    color: colors.text,
   },
   chapterSubtitle: {
     fontSize: 12,
@@ -364,7 +367,7 @@ const styles = StyleSheet.create({
   ctaTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
     marginTop: 12,
   },
   ctaText: {
@@ -387,6 +390,6 @@ const styles = StyleSheet.create({
   ctaButtonText: {
     fontSize: 14,
     fontWeight: "700",
-    color: colors.black,
+    color: colors.textInverse,
   },
 });

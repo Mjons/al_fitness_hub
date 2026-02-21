@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,12 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors } from '../styles/theme';
+import { useTheme } from '../styles/ThemeContext';
 import { BottomNav } from './BottomNav';
 
 export const NutritionSummary = ({ onNavigate }) => {
-  const days = ['21 Mon', '22 Tue', '23 Wed', '24 Thu', '25 Fri'];
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const stats = [
     { label: 'Daily Calories', val: '2,100', unit: 'kcal target', icon: 'local-fire-department', prog: 65 },
@@ -25,27 +26,10 @@ export const NutritionSummary = ({ onNavigate }) => {
           style={styles.backButton}
           onPress={() => onNavigate('DASHBOARD')}
         >
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Nutrition</Text>
-        <TouchableOpacity style={styles.moreButton}>
-          <MaterialIcons name="more-horiz" size={24} color={colors.white} />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.daysNav}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {days.map((d, i) => (
-            <TouchableOpacity
-              key={i}
-              style={[styles.dayTab, i === 2 && styles.dayTabActive]}
-            >
-              <Text style={[styles.dayText, i === 2 && styles.dayTextActive]}>
-                {d}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
@@ -113,22 +97,15 @@ export const NutritionSummary = ({ onNavigate }) => {
         </View>
       </ScrollView>
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => onNavigate('NUTRITION_LOG')}
-      >
-        <MaterialIcons name="add" size={28} color={colors.black} />
-      </TouchableOpacity>
-
       <BottomNav currentScreen="NUTRITION_SUMMARY" onNavigate={onNavigate} />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -136,7 +113,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: colors.divider,
   },
   backButton: {
     width: 40,
@@ -148,35 +125,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.white,
-  },
-  moreButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  daysNav: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
-  },
-  dayTab: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  dayTabActive: {
-    borderBottomColor: colors.primary,
-  },
-  dayText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.gray[500],
-  },
-  dayTextActive: {
-    color: colors.primary,
+    color: colors.text,
   },
   content: {
     flex: 1,
@@ -206,7 +155,7 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 32,
     fontWeight: '900',
-    color: colors.white,
+    color: colors.text,
   },
   pageSubtitle: {
     fontSize: 14,
@@ -221,10 +170,10 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.divider,
     padding: 20,
   },
   statHeader: {
@@ -251,7 +200,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 28,
     fontWeight: '900',
-    color: colors.white,
+    color: colors.text,
   },
   statUnit: {
     fontSize: 10,
@@ -282,7 +231,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
   },
   pillarCard: {
     flexDirection: 'row',
@@ -302,7 +251,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.divider,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -313,7 +262,7 @@ const styles = StyleSheet.create({
   pillarTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
   },
   pillarDesc: {
     fontSize: 12,
@@ -328,21 +277,5 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginTop: 8,
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 100,
-    right: 16,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 8,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
 });

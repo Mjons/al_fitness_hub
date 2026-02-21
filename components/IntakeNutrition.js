@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,14 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors } from '../styles/theme';
+import { useTheme } from '../styles/ThemeContext';
 
-export const IntakeNutrition = ({ onNext, onBack }) => {
-  const [processedFreq, setProcessedFreq] = useState('Sometimes');
-  const [water, setWater] = useState(4);
+export const IntakeNutrition = ({ onNext, onBack, initialData }) => {
+  const { colors, isDark, toggleTheme } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const [processedFreq, setProcessedFreq] = useState(initialData?.processedFreq ?? 'Sometimes');
+  const [water, setWater] = useState(initialData?.water ?? 4);
 
   const calculateNutritionScore = () => {
     let score = 0;
@@ -38,10 +41,12 @@ export const IntakeNutrition = ({ onNext, onBack }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.stepText}>Step 5 of 7</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
+          <MaterialIcons name={isDark ? "light-mode" : "dark-mode"} size={20} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.progressContainer}>
@@ -99,7 +104,7 @@ export const IntakeNutrition = ({ onNext, onBack }) => {
                   <MaterialIcons
                     name="water-drop"
                     size={28}
-                    color={i <= water ? colors.primary : 'rgba(255,255,255,0.1)'}
+                    color={i <= water ? colors.primary : colors.gray[600]}
                   />
                 </TouchableOpacity>
               ))}
@@ -112,21 +117,21 @@ export const IntakeNutrition = ({ onNext, onBack }) => {
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => onNext(calculateNutritionScore(), calculateHydrationScore())}
+          onPress={() => onNext(calculateNutritionScore(), calculateHydrationScore(), { processedFreq, water })}
           activeOpacity={0.8}
         >
           <Text style={styles.buttonText}>Continue</Text>
-          <MaterialIcons name="arrow-forward" size={20} color={colors.black} />
+          <MaterialIcons name="arrow-forward" size={20} color={colors.textInverse} />
         </TouchableOpacity>
       </View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -135,6 +140,13 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeToggle: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -154,7 +166,7 @@ const styles = StyleSheet.create({
   },
   progressBg: {
     height: 6,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.overlay,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -170,7 +182,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '900',
-    color: colors.white,
+    color: colors.text,
     marginBottom: 32,
     marginTop: 16,
   },
@@ -194,7 +206,7 @@ const styles = StyleSheet.create({
     width: '48%',
     paddingVertical: 16,
     paddingHorizontal: 12,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -222,11 +234,11 @@ const styles = StyleSheet.create({
     color: colors.gray[400],
   },
   waterCard: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.divider,
   },
   waterGrid: {
     flexDirection: 'row',
@@ -261,7 +273,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     fontWeight: '900',
-    color: colors.black,
+    color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 2,
   },

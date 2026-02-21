@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,16 +8,19 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
-import { colors } from '../styles/theme';
+import { useTheme } from '../styles/ThemeContext';
 
-export const IntakeMindfulness = ({ onNext, onBack }) => {
-  const [outdoors, setOutdoors] = useState(1);
-  const [stress, setStress] = useState(5);
-  const [mindfulness, setMindfulness] = useState(null);
+export const IntakeMindfulness = ({ onNext, onBack, initialData }) => {
+  const { colors, isDark, toggleTheme } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  const [unsureOutdoors, setUnsureOutdoors] = useState(false);
-  const [unsureStress, setUnsureStress] = useState(false);
-  const [unsureMindfulness, setUnsureMindfulness] = useState(false);
+  const [outdoors, setOutdoors] = useState(initialData?.outdoors ?? 1);
+  const [stress, setStress] = useState(initialData?.stress ?? 5);
+  const [mindfulness, setMindfulness] = useState(initialData?.mindfulness ?? null);
+
+  const [unsureOutdoors, setUnsureOutdoors] = useState(initialData?.unsureOutdoors ?? false);
+  const [unsureStress, setUnsureStress] = useState(initialData?.unsureStress ?? false);
+  const [unsureMindfulness, setUnsureMindfulness] = useState(initialData?.unsureMindfulness ?? false);
 
   const calculateMindfulnessScore = () => {
     if (unsureStress) return 5;
@@ -41,10 +44,12 @@ export const IntakeMindfulness = ({ onNext, onBack }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.stepText}>Step 7 of 7</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
+          <MaterialIcons name={isDark ? "light-mode" : "dark-mode"} size={20} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.progressContainer}>
@@ -185,22 +190,22 @@ export const IntakeMindfulness = ({ onNext, onBack }) => {
         <TouchableOpacity
           style={styles.button}
           onPress={() =>
-            onNext(calculateMindfulnessScore(), calculateEnvironmentScore())
+            onNext(calculateMindfulnessScore(), calculateEnvironmentScore(), { outdoors, stress, mindfulness, unsureOutdoors, unsureStress, unsureMindfulness })
           }
           activeOpacity={0.8}
         >
           <Text style={styles.buttonText}>Continue</Text>
-          <MaterialIcons name="arrow-forward" size={20} color={colors.black} />
+          <MaterialIcons name="arrow-forward" size={20} color={colors.textInverse} />
         </TouchableOpacity>
       </View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -209,6 +214,13 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeToggle: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -228,7 +240,7 @@ const styles = StyleSheet.create({
   },
   progressBg: {
     height: 6,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.overlay,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -248,7 +260,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '900',
-    color: colors.white,
+    color: colors.text,
   },
   subtitle: {
     fontSize: 16,
@@ -276,7 +288,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
   },
   unsureToggleActive: {
     backgroundColor: `${colors.primary}20`,
@@ -301,7 +313,7 @@ const styles = StyleSheet.create({
   optionButton: {
     flex: 1,
     height: 56,
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -321,11 +333,11 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   sliderCard: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: colors.divider,
     alignItems: 'center',
   },
   sliderValue: {
@@ -364,7 +376,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     fontWeight: '900',
-    color: colors.black,
+    color: colors.textInverse,
     textTransform: 'uppercase',
     letterSpacing: 2,
   },

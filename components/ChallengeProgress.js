@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,8 @@ import {
   StyleSheet,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { colors } from "../styles/theme";
-import { THIRTY_DAY_CHALLENGES, getWeekFromDay } from "../constants";
+import { useTheme } from "../styles/ThemeContext";
+import { TWENTY_ONE_DAY_CHALLENGES, getPhaseFromDay } from "../constants";
 import { BottomNav } from "./BottomNav";
 
 export const ChallengeProgress = ({
@@ -16,7 +16,10 @@ export const ChallengeProgress = ({
   onSelectChallenge,
   onNavigate,
 }) => {
-  const pillars = Object.keys(THIRTY_DAY_CHALLENGES);
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const pillars = Object.keys(TWENTY_ONE_DAY_CHALLENGES);
   const todayKey = new Date().toISOString().split("T")[0];
 
   // Calculate overall stats
@@ -25,7 +28,7 @@ export const ChallengeProgress = ({
     (id) => challengeStates[id]?.currentDay > 0,
   ).length;
   const completedChallenges = pillars.filter(
-    (id) => challengeStates[id]?.currentDay >= 30,
+    (id) => challengeStates[id]?.currentDay >= 21,
   ).length;
 
   // Calculate total streak
@@ -41,9 +44,9 @@ export const ChallengeProgress = ({
           style={styles.backButton}
           onPress={() => onNavigate("DASHBOARD")}
         >
-          <MaterialIcons name="arrow-back" size={24} color={colors.white} />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>30-Day Challenges</Text>
+        <Text style={styles.headerTitle}>21-Day Challenges</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -54,7 +57,7 @@ export const ChallengeProgress = ({
       >
         <Text style={styles.pageTitle}>Your Challenge Journey</Text>
         <Text style={styles.pageSubtitle}>
-          Master each pillar with progressive 30-day challenges
+          Master each pillar with progressive 21-day challenges
         </Text>
 
         {/* Overall Progress Card */}
@@ -97,17 +100,16 @@ export const ChallengeProgress = ({
         <Text style={styles.sectionTitle}>All Challenges</Text>
         <View style={styles.challengesList}>
           {pillars.map((pillarId) => {
-            const challenge = THIRTY_DAY_CHALLENGES[pillarId];
+            const challenge = TWENTY_ONE_DAY_CHALLENGES[pillarId];
             const state = challengeStates[pillarId] || {
               currentDay: 1,
               completedTasks: {},
               streakDays: 0,
             };
             const { currentDay, completedTasks, streakDays } = state;
-            const currentWeek = getWeekFromDay(currentDay);
-            const progressPercent = Math.round((currentDay / 30) * 100);
-            const isCompleted = currentDay >= 30;
-            const isActive = currentDay > 0;
+            const currentPhase = getPhaseFromDay(currentDay);
+            const progressPercent = Math.min(100, Math.round((currentDay / 21) * 100));
+            const isCompleted = currentDay >= 21;
 
             // Get today's completion status
             const todayTasks = completedTasks[todayKey] || [];
@@ -117,6 +119,12 @@ export const ChallengeProgress = ({
             const todayComplete =
               availableTasks.length > 0 &&
               availableTasks.every((t) => todayTasks.includes(t.id));
+
+            const phaseLabel = isCompleted
+              ? "Challenge Complete!"
+              : currentPhase === 5
+                ? "Day 21 — Celebration!"
+                : `Phase ${currentPhase} — Day ${currentDay}`;
 
             return (
               <TouchableOpacity
@@ -142,18 +150,14 @@ export const ChallengeProgress = ({
                       size={24}
                       color={
                         isCompleted || todayComplete
-                          ? colors.black
+                          ? colors.textInverse
                           : colors.primary
                       }
                     />
                   </View>
                   <View style={styles.challengeInfo}>
                     <Text style={styles.challengeName}>{challenge.name}</Text>
-                    <Text style={styles.challengeWeek}>
-                      {isCompleted
-                        ? "Challenge Complete!"
-                        : `Week ${currentWeek} - Day ${currentDay}`}
-                    </Text>
+                    <Text style={styles.challengeWeek}>{phaseLabel}</Text>
                   </View>
                   <View style={styles.challengeRight}>
                     {todayComplete && !isCompleted && (
@@ -215,7 +219,7 @@ export const ChallengeProgress = ({
                       color={colors.gray[500]}
                     />
                     <Text style={styles.challengeStatText}>
-                      {currentWeek} task{currentWeek > 1 ? "s" : ""} active
+                      {availableTasks.length} task{availableTasks.length !== 1 ? "s" : ""} active
                     </Text>
                   </View>
                 </View>
@@ -230,9 +234,9 @@ export const ChallengeProgress = ({
           <View style={styles.infoContent}>
             <Text style={styles.infoTitle}>How Challenges Work</Text>
             <Text style={styles.infoText}>
-              Each pillar has a 30-day progressive challenge. Start with 1 task
-              in Week 1 and build up to 4 tasks by Week 4. Complete all daily
-              tasks to maintain your streak!
+              Each pillar has a 21-day progressive challenge across 4 phases.
+              Start with 1 task and build to 4 by Phase 4. Complete Day 21 to
+              unlock a free call and training session with Coach Al!
             </Text>
           </View>
         </View>
@@ -243,10 +247,10 @@ export const ChallengeProgress = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
@@ -254,7 +258,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.05)",
+    borderBottomColor: colors.divider,
   },
   backButton: {
     width: 40,
@@ -266,7 +270,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
   },
   content: {
     flex: 1,
@@ -278,7 +282,7 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 24,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
   },
   pageSubtitle: {
     fontSize: 14,
@@ -287,7 +291,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   overallCard: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 24,
     borderWidth: 2,
@@ -313,7 +317,7 @@ const styles = StyleSheet.create({
   overallTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
   },
   overallSubtitle: {
     fontSize: 12,
@@ -332,7 +336,7 @@ const styles = StyleSheet.create({
   overallStatValue: {
     fontSize: 28,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
   },
   overallStatLabel: {
     fontSize: 10,
@@ -344,12 +348,12 @@ const styles = StyleSheet.create({
   overallStatDivider: {
     width: 1,
     height: 40,
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: colors.overlay,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
     marginBottom: 16,
   },
   challengesList: {
@@ -357,11 +361,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   challengeCard: {
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
+    borderColor: colors.divider,
   },
   challengeCardCompleted: {
     borderColor: `${colors.warning}40`,
@@ -396,7 +400,7 @@ const styles = StyleSheet.create({
   challengeName: {
     fontSize: 16,
     fontWeight: "700",
-    color: colors.white,
+    color: colors.text,
   },
   challengeWeek: {
     fontSize: 12,
@@ -432,7 +436,7 @@ const styles = StyleSheet.create({
   progressBarBg: {
     flex: 1,
     height: 6,
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: colors.overlay,
     borderRadius: 3,
     overflow: "hidden",
     marginRight: 12,
