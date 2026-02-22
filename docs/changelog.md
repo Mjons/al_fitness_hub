@@ -229,3 +229,121 @@ The Nutrition Summary stat cards (Daily Calories, Daily Protein) showed a progre
 Tapping any meditation card (Breath Awareness, Present Moment, Grounding & Space) previously tried to navigate to a meditation player that doesn't exist yet.
 
 **Fix:** Added a "Coming Soon" modal in `MeditationList.js`. Tapping any card now shows a centered modal with a meditation icon, "Coming Soon" title, message about sessions being crafted by Coach Al, and a "Got It" dismiss button. Cards no longer call `onSelectMeditation`.
+
+---
+
+## 19. Unified Dashboard Check-in with 21-Day Challenge System
+
+The Dashboard check-in and the 21-day challenge system were completely disconnected. The Dashboard showed one static action (e.g., "Nose Breathing") and incremented a generic streak counter unrelated to challenges. The real challenge progression only lived in ChallengeDetail. Now the Dashboard displays actual challenge tasks and the log button completes them all at once, syncing directly with the challenge system.
+
+### `lib/storage.js`
+- **`advanceChallengeDay`** — Prevented unchecking completed tasks. Once a task is checked for today, tapping it again is a no-op (returns `pillarState` unchanged). Removed the toggle-off branch.
+- **`bulkCompleteChallengeTasks`** (new) — Marks all available tasks for `currentDay` as completed in one shot. Advances `currentDay` by 1 if eligible (same calendar-enforcement: max 1 per day, cap at 21). Updates streak, completedDays, lastCompletionDate. Returns updated pillarState. Used by Dashboard's log button.
+
+### `App.js`
+- **`handleDashboardLog`** (new) — Calls `bulkCompleteChallengeTasks`, updates `challengeStates`, persists to AsyncStorage, keeps generic streak in sync via `logToday()`, fire-and-forget syncs to Firebase (challengeProgress + challengeTasks + dailyLog).
+- **Dashboard render** — Replaced `isLoggedToday`/`streak` props with `challengeState={challengeStates[focusPillar]}` and `onToggleLog={handleDashboardLog}`. Added `onSetDay` prop for dev controls.
+
+### `components/Dashboard.js`
+- **Props change** — Accepts `challengeState` and `onSetDay` instead of `isLoggedToday`/`streak`. Derives both internally from challenge data.
+- **Task list** — Replaced single static action card with real task list from `TWENTY_ONE_DAY_CHALLENGES`. Shows each unlocked task with name, description, and check/circle status. Tasks are read-only (no individual tap) — the log button handles all at once.
+- **Day counter** — Shows `Day {currentDay}/21` from challenge state instead of generic streak.
+- **Progress bar** — Added thin progress bar + "{N} days logged" label inside the check-in card.
+- **Completion state** — When `currentDay >= 21`, shows trophy + completion message instead of tasks.
+- **Log button** — Now reads "Log Today's Tasks" / "All Tasks Logged". Disabled after logging.
+
+### `components/ChallengeDetail.js`
+- **Uncheck guard** — Completed tasks no longer respond to taps. `onPress` is a no-op when `completed === true`, `activeOpacity` set to 1 so they don't visually respond.
+
+---
+
+## 20. Dashboard Dev Panel (Phase Jump)
+
+Added DEV_MODE controls to Dashboard matching ChallengeDetail's existing dev panel, so day advancement can be tested without navigating away.
+
+- Red-tinted bar at top with P1/P2/P3/P4/D21 jump buttons
+- Current phase button highlighted green
+- Only renders when `DEV_MODE = true` and `onSetDay` prop is provided
+- Calls `handleSetChallengeDay(focusPillarId, day)` for the user's focus pillar
+
+---
+
+## 21. Dashboard Milestone Triggers + Confetti
+
+Ported all challenge milestone triggers from ChallengeDetail to Dashboard and added confetti animation for celebration.
+
+### Trigger Cards (below check-in card)
+- **Day 5–9**: Phase 1 encouragement — pillar-specific motivational message
+- **Day 10–14**: Mid-Challenge Video — prompt to watch Coach Al's tips
+- **Day 15–20**: 15% Off Coaching — shows `PILLAR15` code with copy-to-clipboard button (uses `expo-clipboard`)
+- **Day 21+**: Full celebration card — cherry-on-top challenge name/description, rewards list, "Schedule Your Free Session" button linking to Calendly
+
+### Confetti Overlay
+- 24 animated pieces (mix of squares and circles) in brand colors (`#13ec13`, `#ec7f13`, `#FFD700`, `#FF6B6B`, `#4ECDC4`, `#A78BFA`)
+- Falls from top with horizontal drift, rotation, and fade-out using React Native `Animated` API
+- No extra dependencies
+- Fires on two occasions:
+  1. Tapping "Log Today's Tasks" (immediate reward feedback)
+  2. When `currentDay` hits a milestone (5, 10, 15, 21) — e.g., via dev panel phase jumps
+
+### New imports added to Dashboard
+- `useState`, `useRef`, `useEffect` from React
+- `Animated`, `Dimensions` from react-native
+- `expo-clipboard` for discount code copy
+- `DAY_21_CHALLENGES`, `DAY_21_REWARDS`, `PHASE_ENCOURAGEMENT` from constants
+
+---
+
+## 22. Other Pillars Visibility Fix
+
+The "Other Pillars" grid on the Dashboard was too faded to read in both light and dark mode.
+
+### Changes
+- **Opacity**: `0.5` → `0.75`
+- **Icon color**: `gray[500]` → `gray[400]` (brighter in both themes — the gray scale is inverted between dark/light modes so `gray[400]` maps to a more visible shade in each)
+- **Label font size**: `8px` → `9px` for better readability
+
+---
+
+## 23. Removed "Coming Soon" Locked Tasks from ChallengeDetail
+
+Removed the "Coming Soon" section that previewed locked/upcoming tasks in `ChallengeDetail.js`. Users now only see their currently available tasks — no spoilers for future phases. Also removed the unused `lockedTasks` variable and associated styles (`lockedTaskCard`, `lockedTaskCheckbox`, `lockedTaskName`, `lockedTaskDescription`, `unlockBadge`, `unlockBadgeText`).
+
+---
+
+## 24. Reset Intro Flow — Dev Only
+
+Moved the "Reset Intro Flow" button on the Dashboard behind the `DEV_MODE` flag. Normal users no longer see it — only visible during development alongside the phase jump panel.
+
+---
+
+## 25. Hide "Skip with Random Data" Button
+
+Set `DEV_MODE = false` in `WelcomeScreen.js`. The "Skip with Random Data (Dev)" button is now hidden from users. All underlying logic (`onRandomFill`, `handleRandomFill` in App.js) remains intact — flip `DEV_MODE` back to `true` to re-enable.
+
+---
+
+## 26. Coach Al Photo on Landing Page
+
+Added Coach Al's actual photo to the Landing Page "Meet Your Coach" section. Reverted WelcomeScreen back to its original picsum placeholder + "High Intensity" badge.
+
+### Changes
+- `LandingPage.js` — Replaced gray circle placeholder in the "About Coach Al" section with `require("../assets/al-coach.png")`. Increased image container height from 160→220px for better photo display. Added `aboutImage` style with `resizeMode: "cover"`.
+- `WelcomeScreen.js` — Reverted hero image back to `picsum.photos/400/360` placeholder and restored "High Intensity" badge with bolt icon.
+- `assets/al-coach.png` — Already copied from Desktop in previous step.
+
+---
+
+## 27. Lock Non-Focus Pillars in 21-Day Challenges
+
+Only the user's weakest pillar (determined by the onboarding questionnaire) is unlocked in the Challenge Progress screen. All other pillars are locked until the focus pillar's 21-day challenge is completed.
+
+### Changes
+- `App.js` — Passes `focusPillar` prop to both `ChallengeProgress` renders.
+- `ChallengeProgress.js`:
+  - Accepts new `focusPillar` prop
+  - Non-focus pillars render as locked: 55% opacity, lock icon replacing pillar icon, "Complete your focus pillar first" subtitle, no stats row, progress bar shows "—"
+  - Locked cards are not tappable (no-op `onPress`, `activeOpacity: 1`)
+  - Already-completed pillars remain visible and tappable regardless of focus
+  - Updated info card text to explain the sequential unlock flow
+  - New styles: `challengeCardLocked`, `challengeIconLocked`, `lockedText`, `lockedSubtext`

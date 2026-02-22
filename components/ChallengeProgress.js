@@ -13,6 +13,7 @@ import { BottomNav } from "./BottomNav";
 
 export const ChallengeProgress = ({
   challengeStates,
+  focusPillar,
   onSelectChallenge,
   onNavigate,
 }) => {
@@ -112,6 +113,7 @@ export const ChallengeProgress = ({
             const currentPhase = getPhaseFromDay(currentDay);
             const progressPercent = Math.min(100, Math.round((currentDay / 21) * 100));
             const isCompleted = currentDay >= 21;
+            const isLocked = focusPillar && pillarId !== focusPillar && !isCompleted;
 
             // Get today's completion status
             const todayTasks = completedTasks[todayKey] || [];
@@ -124,9 +126,11 @@ export const ChallengeProgress = ({
 
             const phaseLabel = isCompleted
               ? "Challenge Complete!"
-              : currentPhase === 5
-                ? "Day 21 — Celebration!"
-                : `Phase ${currentPhase} — Day ${currentDay}`;
+              : isLocked
+                ? "Complete your focus pillar first"
+                : currentPhase === 5
+                  ? "Day 21 — Celebration!"
+                  : `Phase ${currentPhase} — Day ${currentDay}`;
 
             return (
               <TouchableOpacity
@@ -134,35 +138,43 @@ export const ChallengeProgress = ({
                 style={[
                   styles.challengeCard,
                   isCompleted && styles.challengeCardCompleted,
-                  todayComplete && styles.challengeCardTodayComplete,
+                  todayComplete && !isLocked && styles.challengeCardTodayComplete,
+                  isLocked && styles.challengeCardLocked,
                 ]}
-                onPress={() => onSelectChallenge(pillarId)}
-                activeOpacity={0.7}
+                onPress={() => !isLocked && onSelectChallenge(pillarId)}
+                activeOpacity={isLocked ? 1 : 0.7}
               >
                 <View style={styles.challengeHeader}>
                   <View
                     style={[
                       styles.challengeIcon,
                       isCompleted && styles.challengeIconCompleted,
-                      todayComplete && styles.challengeIconTodayComplete,
+                      todayComplete && !isLocked && styles.challengeIconTodayComplete,
+                      isLocked && styles.challengeIconLocked,
                     ]}
                   >
                     <MaterialIcons
-                      name={challenge.icon}
+                      name={isLocked ? "lock" : challenge.icon}
                       size={24}
                       color={
-                        isCompleted || todayComplete
-                          ? colors.textInverse
-                          : colors.primary
+                        isLocked
+                          ? colors.gray[500]
+                          : isCompleted || todayComplete
+                            ? colors.textInverse
+                            : colors.primary
                       }
                     />
                   </View>
                   <View style={styles.challengeInfo}>
-                    <Text style={styles.challengeName}>{challenge.name}</Text>
-                    <Text style={styles.challengeWeek}>{phaseLabel}</Text>
+                    <Text style={[styles.challengeName, isLocked && styles.lockedText]}>
+                      {challenge.name}
+                    </Text>
+                    <Text style={[styles.challengeWeek, isLocked && styles.lockedSubtext]}>
+                      {phaseLabel}
+                    </Text>
                   </View>
                   <View style={styles.challengeRight}>
-                    {todayComplete && !isCompleted && (
+                    {todayComplete && !isCompleted && !isLocked && (
                       <View style={styles.todayBadge}>
                         <MaterialIcons
                           name="check"
@@ -180,51 +192,63 @@ export const ChallengeProgress = ({
                         />
                       </View>
                     )}
-                    <MaterialIcons
-                      name="chevron-right"
-                      size={24}
-                      color={colors.gray[500]}
-                    />
+                    {isLocked ? (
+                      <MaterialIcons
+                        name="lock-outline"
+                        size={20}
+                        color={colors.gray[600]}
+                      />
+                    ) : (
+                      <MaterialIcons
+                        name="chevron-right"
+                        size={24}
+                        color={colors.gray[500]}
+                      />
+                    )}
                   </View>
                 </View>
 
                 {/* Progress Bar */}
                 <View style={styles.challengeProgress}>
-                  <View style={styles.progressBarBg}>
+                  <View style={[styles.progressBarBg, isLocked && { opacity: 0.4 }]}>
                     <View
                       style={[
                         styles.progressBarFill,
-                        { width: `${progressPercent}%` },
+                        { width: `${isLocked ? 0 : progressPercent}%` },
                         isCompleted && styles.progressBarFillComplete,
                       ]}
                     />
                   </View>
-                  <Text style={styles.progressText}>{progressPercent}%</Text>
+                  <Text style={[styles.progressText, isLocked && styles.lockedSubtext]}>
+                    {isLocked ? "—" : `${progressPercent}%`}
+                  </Text>
                 </View>
 
                 {/* Stats Row */}
-                <View style={styles.challengeStats}>
-                  <View style={styles.challengeStat}>
-                    <MaterialIcons
-                      name="local-fire-department"
-                      size={14}
-                      color={colors.secondary}
-                    />
-                    <Text style={styles.challengeStatText}>
-                      {streakDays} day streak
-                    </Text>
+                {!isLocked && (
+                  <View style={styles.challengeStats}>
+                    <View style={styles.challengeStat}>
+                      <MaterialIcons
+                        name="local-fire-department"
+                        size={14}
+                        color={colors.secondary}
+                      />
+                      <Text style={styles.challengeStatText}>
+                        {streakDays} day streak
+                      </Text>
+                    </View>
+                    <View style={styles.challengeStat}>
+                      <MaterialIcons
+                        name="assignment"
+                        size={14}
+                        color={colors.gray[500]}
+                      />
+                      <Text style={styles.challengeStatText}>
+                        {availableTasks.length} task{availableTasks.length !== 1 ? "s" : ""} active
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.challengeStat}>
-                    <MaterialIcons
-                      name="assignment"
-                      size={14}
-                      color={colors.gray[500]}
-                    />
-                    <Text style={styles.challengeStatText}>
-                      {availableTasks.length} task{availableTasks.length !== 1 ? "s" : ""} active
-                    </Text>
-                  </View>
-                </View>
+                )}
               </TouchableOpacity>
             );
           })}
@@ -236,9 +260,10 @@ export const ChallengeProgress = ({
           <View style={styles.infoContent}>
             <Text style={styles.infoTitle}>How Challenges Work</Text>
             <Text style={styles.infoText}>
-              Each pillar has a 21-day progressive challenge across 4 phases.
-              Start with 1 task and build to 4 by Phase 4. Complete Day 21 to
-              unlock a free call and training session with Coach Al!
+              Your weakest pillar is unlocked first. Complete its 21-day
+              challenge to unlock the next pillar. Each challenge has 4
+              progressive phases. Complete Day 21 to unlock a free call and
+              training session with Coach Al!
             </Text>
           </View>
         </View>
@@ -376,6 +401,10 @@ const makeStyles = (colors) => StyleSheet.create({
   challengeCardTodayComplete: {
     borderColor: `${colors.primary}40`,
   },
+  challengeCardLocked: {
+    opacity: 0.55,
+    borderColor: colors.gray[700],
+  },
   challengeHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -394,6 +423,15 @@ const makeStyles = (colors) => StyleSheet.create({
   },
   challengeIconTodayComplete: {
     backgroundColor: colors.primary,
+  },
+  challengeIconLocked: {
+    backgroundColor: colors.gray[700],
+  },
+  lockedText: {
+    color: colors.gray[500],
+  },
+  lockedSubtext: {
+    color: colors.gray[600],
   },
   challengeInfo: {
     flex: 1,

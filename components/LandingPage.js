@@ -478,9 +478,10 @@ export const LandingPage = ({ onGetStarted }) => {
         <View style={styles.section}>
           <View style={styles.aboutBox}>
             <View style={styles.aboutImageContainer}>
-              <View style={styles.aboutImagePlaceholder}>
-                <MaterialIcons name="person" size={48} color={colors.gray[500]} />
-              </View>
+              <Image
+                source={require("../assets/al-coach.png")}
+                style={styles.aboutImage}
+              />
             </View>
             <View style={styles.aboutContent}>
               <Text style={styles.aboutLabel}>MEET YOUR COACH</Text>
@@ -1088,18 +1089,14 @@ const makeStyles = (colors, width) => {
     overflow: "hidden",
   },
   aboutImageContainer: {
-    height: 160,
+    height: 320,
     backgroundColor: colors.gray[800],
-    alignItems: "center",
-    justifyContent: "center",
+    overflow: "hidden",
   },
-  aboutImagePlaceholder: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: colors.gray[700],
-    alignItems: "center",
-    justifyContent: "center",
+  aboutImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "contain",
   },
   aboutContent: {
     padding: spacing.xl,

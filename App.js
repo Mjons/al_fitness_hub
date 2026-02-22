@@ -44,6 +44,7 @@ import {
   saveChallengeStates,
   saveReadChapters,
   advanceChallengeDay,
+  bulkCompleteChallengeTasks,
   clearAllData,
   saveAllData,
   saveTheme,
@@ -213,6 +214,48 @@ export default function App() {
       }
     } catch (error) {
       console.log("Error logging today:", error);
+    }
+  };
+
+  // --- Dashboard Log (bulk-completes all challenge tasks) ---
+
+  const handleDashboardLog = async () => {
+    const pillarState = challengeStates[focusPillar];
+    const updated = bulkCompleteChallengeTasks(
+      pillarState,
+      focusPillar,
+      TWENTY_ONE_DAY_CHALLENGES,
+    );
+
+    // No change (already all done)
+    if (updated === pillarState) return;
+
+    const newChallengeStates = { ...challengeStates, [focusPillar]: updated };
+    setChallengeStates(newChallengeStates);
+
+    try {
+      await saveChallengeStates(newChallengeStates);
+
+      // Also keep generic streak in sync for ProgressSummary etc.
+      if (!isLoggedToday) {
+        const result = await logToday(streak, totalDaysLogged, logHistory);
+        setIsLoggedToday(true);
+        setStreak(result.streak);
+        setTotalDaysLogged(result.totalDaysLogged);
+        setLastLogDate(result.lastLogDate);
+        setLogHistory(result.logHistory);
+      }
+
+      // Fire-and-forget cloud sync
+      if (userIdRef.current) {
+        const today = new Date().toISOString().split("T")[0];
+        const todayTasks = updated.completedTasks[today] || [];
+        syncChallengeProgress(userIdRef.current, focusPillar, updated);
+        syncChallengeTasks(userIdRef.current, focusPillar, today, todayTasks);
+        syncDailyLog(userIdRef.current, today, streak + 1, totalDaysLogged + 1);
+      }
+    } catch (error) {
+      console.log("Error in dashboard log:", error);
     }
   };
 
@@ -602,14 +645,14 @@ export default function App() {
           <Dashboard
             userName={userName}
             focusPillarId={focusPillar}
-            isLoggedToday={isLoggedToday}
-            streak={streak}
-            onToggleLog={handleToggleLog}
+            challengeState={challengeStates[focusPillar]}
+            onToggleLog={handleDashboardLog}
             onNavigate={navigateTo}
             onSelectWorkout={(w) => {
               setSelectedWorkout(w);
               navigateTo("WORKOUT_DETAIL");
             }}
+            onSetDay={handleSetChallengeDay}
             onReset={handleReset}
           />
         );
@@ -686,6 +729,7 @@ export default function App() {
         return (
           <ChallengeProgress
             challengeStates={challengeStates}
+            focusPillar={focusPillar}
             onSelectChallenge={handleSelectChallenge}
             onNavigate={navigateTo}
           />
@@ -702,6 +746,7 @@ export default function App() {
         ) : (
           <ChallengeProgress
             challengeStates={challengeStates}
+            focusPillar={focusPillar}
             onSelectChallenge={handleSelectChallenge}
             onNavigate={navigateTo}
           />

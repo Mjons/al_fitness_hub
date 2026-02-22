@@ -52,10 +52,6 @@ export const ChallengeDetail = ({
   const availableTasks = challenge.tasks.filter(
     (task) => task.unlockedDay <= currentDay,
   );
-  const lockedTasks = challenge.tasks.filter(
-    (task) => task.unlockedDay > currentDay,
-  );
-
   const isTaskCompleted = (taskId) => todayCompletedTasks.includes(taskId);
   const allTasksCompleted =
     availableTasks.length > 0 &&
@@ -308,8 +304,8 @@ export const ChallengeDetail = ({
                   <TouchableOpacity
                     key={task.id}
                     style={[styles.taskCard, completed && styles.taskCardCompleted]}
-                    onPress={() => onToggleTask(pillarId, task.id)}
-                    activeOpacity={0.7}
+                    onPress={() => !completed && onToggleTask(pillarId, task.id)}
+                    activeOpacity={completed ? 1 : 0.7}
                   >
                     <View
                       style={[
@@ -359,43 +355,7 @@ export const ChallengeDetail = ({
           </>
         )}
 
-        {/* Locked Tasks Preview */}
-        {lockedTasks.length > 0 && (
-          <>
-            <Text style={styles.sectionTitle}>Coming Soon</Text>
-            <View style={styles.tasksList}>
-              {lockedTasks.map((task) => (
-                <View key={task.id} style={styles.lockedTaskCard}>
-                  <View style={styles.lockedTaskCheckbox}>
-                    <MaterialIcons
-                      name="lock"
-                      size={14}
-                      color={colors.gray[600]}
-                    />
-                  </View>
-                  <View style={styles.taskContent}>
-                    <View style={styles.taskHeader}>
-                      <Text style={styles.lockedTaskName}>{task.name}</Text>
-                      <View style={styles.unlockBadge}>
-                        <MaterialIcons
-                          name="schedule"
-                          size={10}
-                          color={colors.gray[500]}
-                        />
-                        <Text style={styles.unlockBadgeText}>
-                          Phase {task.phase}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text style={styles.lockedTaskDescription}>
-                      {task.description}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          </>
-        )}
+
 
         {/* Phase Progression */}
         <Text style={styles.sectionTitle}>Phase Progression</Text>

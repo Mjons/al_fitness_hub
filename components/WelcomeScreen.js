@@ -11,8 +11,8 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { spacing, borderRadius, fontSize } from "../styles/theme";
 import { useTheme } from "../styles/ThemeContext";
 
-// DEV_MODE: Set to false to hide the random fill button
-const DEV_MODE = true;
+// DEV_MODE: Set to true to show the random fill button
+const DEV_MODE = false;
 
 export const WelcomeScreen = ({ onNext, onRandomFill }) => {
   const { colors } = useTheme();

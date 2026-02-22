@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,29 +7,167 @@ import {
   Image,
   StyleSheet,
   Linking,
+  Animated,
+  Dimensions,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useTheme } from "../styles/ThemeContext";
-import { WORKOUTS, PILLARS, PILLAR_ACTIONS } from "../constants";
+import {
+  WORKOUTS,
+  PILLARS,
+  TWENTY_ONE_DAY_CHALLENGES,
+  getPhaseFromDay,
+  DAY_21_CHALLENGES,
+  DAY_21_REWARDS,
+  PHASE_ENCOURAGEMENT,
+} from "../constants";
 import { BottomNav } from "./BottomNav";
+
+const DEV_MODE = true;
+const CONFETTI_COLORS = ["#13ec13", "#ec7f13", "#FFD700", "#FF6B6B", "#4ECDC4", "#A78BFA"];
+const CONFETTI_COUNT = 24;
+const SCREEN_WIDTH = Dimensions.get("window").width;
+
+const ConfettiOverlay = ({ trigger }) => {
+  const pieces = useRef(
+    Array.from({ length: CONFETTI_COUNT }, () => ({
+      animY: new Animated.Value(0),
+      animX: new Animated.Value(0),
+      animOpacity: new Animated.Value(1),
+      animRotate: new Animated.Value(0),
+      startX: Math.random() * SCREEN_WIDTH,
+      color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+      size: 5 + Math.random() * 7,
+      isSquare: Math.random() > 0.5,
+    })),
+  ).current;
+
+  useEffect(() => {
+    if (!trigger) return;
+    pieces.forEach((p) => {
+      p.animY.setValue(0);
+      p.animX.setValue(0);
+      p.animOpacity.setValue(1);
+      p.animRotate.setValue(0);
+    });
+    const anims = pieces.map((p, i) =>
+      Animated.parallel([
+        Animated.timing(p.animY, {
+          toValue: 500 + Math.random() * 300,
+          duration: 2200 + Math.random() * 1200,
+          delay: i * 40,
+          useNativeDriver: false,
+        }),
+        Animated.timing(p.animX, {
+          toValue: (Math.random() - 0.5) * 140,
+          duration: 2200 + Math.random() * 1200,
+          delay: i * 40,
+          useNativeDriver: false,
+        }),
+        Animated.timing(p.animOpacity, {
+          toValue: 0,
+          duration: 2200 + Math.random() * 1200,
+          delay: i * 40,
+          useNativeDriver: false,
+        }),
+        Animated.timing(p.animRotate, {
+          toValue: 3 + Math.random() * 5,
+          duration: 2200 + Math.random() * 1200,
+          delay: i * 40,
+          useNativeDriver: false,
+        }),
+      ]),
+    );
+    Animated.parallel(anims).start();
+  }, [trigger]);
+
+  if (!trigger) return null;
+
+  return (
+    <View
+      style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
+      pointerEvents="none"
+    >
+      {pieces.map((p, i) => {
+        const spin = p.animRotate.interpolate({
+          inputRange: [0, 10],
+          outputRange: ["0deg", "3600deg"],
+        });
+        return (
+          <Animated.View
+            key={i}
+            style={{
+              position: "absolute",
+              left: p.startX,
+              top: -10,
+              width: p.size,
+              height: p.isSquare ? p.size : p.size * 0.5,
+              backgroundColor: p.color,
+              borderRadius: p.isSquare ? 2 : p.size,
+              opacity: p.animOpacity,
+              transform: [
+                { translateY: p.animY },
+                { translateX: p.animX },
+                { rotate: spin },
+              ],
+            }}
+          />
+        );
+      })}
+    </View>
+  );
+};
 
 export const Dashboard = ({
   userName,
   focusPillarId,
-  isLoggedToday,
-  streak,
+  challengeState,
   onToggleLog,
   onNavigate,
   onSelectWorkout,
+  onSetDay,
   onReset,
 }) => {
   const { colors, isDark, toggleTheme } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const focusPillar = PILLARS.find((p) => p.id === focusPillarId) || PILLARS[0];
-  const pillarAction = PILLAR_ACTIONS[focusPillarId];
+  const [codeCopied, setCodeCopied] = useState(false);
+  const [confettiKey, setConfettiKey] = useState(0);
+
+  // Derive challenge data
+  const challenge = TWENTY_ONE_DAY_CHALLENGES[focusPillarId];
+  const { currentDay, completedTasks, streakDays } = challengeState || {};
+  const todayKey = new Date().toISOString().split("T")[0];
+  const todayCompletedTasks = (completedTasks && completedTasks[todayKey]) || [];
+  const availableTasks = challenge
+    ? challenge.tasks.filter((t) => t.unlockedDay <= (currentDay || 1))
+    : [];
+  const isLoggedToday =
+    availableTasks.length > 0 &&
+    availableTasks.every((t) => todayCompletedTasks.includes(t.id));
+  const isCompleted = (currentDay || 1) >= 21;
+  const currentPhase = getPhaseFromDay(currentDay || 1);
+  const completedDays = (challengeState && challengeState.completedDays) || 0;
+  const encouragement = PHASE_ENCOURAGEMENT[focusPillarId];
+  const day21Challenge = DAY_21_CHALLENGES[focusPillarId];
+  const hasTrigger = (currentDay || 1) >= 5;
+
+  // Fire confetti when a milestone trigger is visible
+  const prevDayRef = useRef(currentDay);
+  useEffect(() => {
+    if ((currentDay || 1) >= 5 && prevDayRef.current !== currentDay) {
+      const milestones = [5, 10, 15, 21];
+      if (milestones.includes(currentDay)) {
+        setConfettiKey((k) => k + 1);
+      }
+    }
+    prevDayRef.current = currentDay;
+  }, [currentDay]);
 
   return (
     <View style={styles.container}>
+      <ConfettiOverlay trigger={confettiKey || null} />
       <View style={styles.header}>
         <View style={styles.userInfo}>
           <Image
@@ -52,6 +190,46 @@ export const Dashboard = ({
           />
         </TouchableOpacity>
       </View>
+
+      {DEV_MODE && onSetDay && (
+        <View style={styles.devPanel}>
+          <Text style={styles.devPanelLabel}>DEV: Jump to Phase</Text>
+          <View style={styles.devButtonRow}>
+            {[
+              { phase: 1, day: 1 },
+              { phase: 2, day: 6 },
+              { phase: 3, day: 11 },
+              { phase: 4, day: 16 },
+            ].map(({ phase, day }) => (
+              <TouchableOpacity
+                key={phase}
+                style={[
+                  styles.devWeekButton,
+                  currentPhase === phase && styles.devWeekButtonActive,
+                ]}
+                onPress={() => onSetDay(focusPillarId, day)}
+              >
+                <Text
+                  style={[
+                    styles.devWeekButtonText,
+                    currentPhase === phase && styles.devWeekButtonTextActive,
+                  ]}
+                >
+                  P{phase}
+                </Text>
+                <Text style={styles.devWeekButtonSub}>Day {day}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={[styles.devWeekButton, styles.devCompleteButton]}
+              onPress={() => onSetDay(focusPillarId, 21)}
+            >
+              <Text style={styles.devWeekButtonText}>D21</Text>
+              <Text style={styles.devWeekButtonSub}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       <ScrollView
         style={styles.content}
@@ -84,7 +262,7 @@ export const Dashboard = ({
                 ]}
               >
                 <MaterialIcons
-                  name="air"
+                  name={challenge ? challenge.icon : "air"}
                   size={28}
                   color={isLoggedToday ? colors.textInverse : colors.primary}
                 />
@@ -94,9 +272,11 @@ export const Dashboard = ({
                   {focusPillar.name} Check-in
                 </Text>
                 <Text style={styles.checkinSubtitle}>
-                  {isLoggedToday
-                    ? "Completed for today!"
-                    : "Today's Focus Action"}
+                  {isCompleted
+                    ? "Challenge Complete!"
+                    : isLoggedToday
+                      ? "Completed for today!"
+                      : "Today's Focus Tasks"}
                 </Text>
               </View>
             </View>
@@ -107,51 +287,182 @@ export const Dashboard = ({
                   isLoggedToday && styles.streakValueActive,
                 ]}
               >
-                {streak}/21
+                {currentDay || 1}/21
               </Text>
-              <Text style={styles.streakLabel}>Day Streak</Text>
+              <Text style={styles.streakLabel}>Challenge Day</Text>
             </View>
           </View>
 
-          <View
-            style={[
-              styles.actionCard,
-              isLoggedToday && styles.actionCardLogged,
-            ]}
-          >
-            <View style={styles.actionRow}>
-              <MaterialIcons
-                name="auto-awesome"
-                size={16}
-                color={colors.primary}
+          <View style={styles.progressRow}>
+            <View style={styles.progressBarBg}>
+              <View
+                style={[
+                  styles.progressBarFill,
+                  { width: `${Math.min(100, Math.round(((currentDay || 1) / 21) * 100))}%` },
+                ]}
               />
-              <Text style={styles.actionTitle}>{pillarAction.action}</Text>
             </View>
-            <Text style={styles.actionDesc}>{pillarAction.description}</Text>
+            <Text style={styles.progressLabel}>
+              {completedDays} day{completedDays !== 1 ? "s" : ""} logged
+            </Text>
           </View>
 
-          <TouchableOpacity
-            style={[styles.logButton, isLoggedToday && styles.logButtonLogged]}
-            onPress={onToggleLog}
-            activeOpacity={0.8}
-          >
-            <MaterialIcons
-              name={isLoggedToday ? "done-all" : "check-circle"}
-              size={24}
-              color={isLoggedToday ? colors.primary : colors.textInverse}
-            />
-            <Text
-              style={[
-                styles.logButtonText,
-                isLoggedToday && styles.logButtonTextLogged,
-              ]}
+          {isCompleted ? (
+            <View style={styles.completionBanner}>
+              <MaterialIcons name="emoji-events" size={32} color={colors.warning} />
+              <Text style={styles.completionText}>
+                You've completed the 21-day {focusPillar.name} challenge!
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.tasksList}>
+              {availableTasks.map((task) => {
+                const done = todayCompletedTasks.includes(task.id);
+                return (
+                  <View
+                    key={task.id}
+                    style={[styles.taskCard, done && styles.taskCardDone]}
+                  >
+                    <View
+                      style={[
+                        styles.taskCheckbox,
+                        done && styles.taskCheckboxDone,
+                      ]}
+                    >
+                      <MaterialIcons
+                        name={done ? "check" : "radio-button-unchecked"}
+                        size={done ? 16 : 20}
+                        color={done ? colors.textInverse : colors.gray[500]}
+                      />
+                    </View>
+                    <View style={styles.taskContent}>
+                      <Text style={[styles.taskName, done && styles.taskNameDone]}>
+                        {task.name}
+                      </Text>
+                      <Text style={styles.taskDesc}>{task.description}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {!isCompleted && (
+            <TouchableOpacity
+              style={[styles.logButton, isLoggedToday && styles.logButtonLogged]}
+              onPress={() => {
+                onToggleLog();
+                setConfettiKey((k) => k + 1);
+              }}
+              activeOpacity={0.8}
+              disabled={isLoggedToday}
             >
-              {isLoggedToday
-                ? "Logged Today"
-                : `Log ${focusPillar.name} Action`}
-            </Text>
-          </TouchableOpacity>
+              <MaterialIcons
+                name={isLoggedToday ? "done-all" : "check-circle"}
+                size={24}
+                color={isLoggedToday ? colors.primary : colors.textInverse}
+              />
+              <Text
+                style={[
+                  styles.logButtonText,
+                  isLoggedToday && styles.logButtonTextLogged,
+                ]}
+              >
+                {isLoggedToday
+                  ? "All Tasks Logged"
+                  : "Log Today's Tasks"}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
+
+        {/* Milestone Triggers */}
+        {(currentDay || 1) >= 5 && (currentDay || 1) < 10 && encouragement && (
+          <View style={styles.triggerCard}>
+            <MaterialIcons name="emoji-emotions" size={24} color={colors.primary} />
+            <View style={styles.triggerContent}>
+              <Text style={styles.triggerLabel}>Phase 1 Complete!</Text>
+              <Text style={styles.triggerText}>{encouragement}</Text>
+            </View>
+          </View>
+        )}
+
+        {(currentDay || 1) >= 10 && (currentDay || 1) < 15 && (
+          <View style={styles.triggerCard}>
+            <MaterialIcons name="play-circle-filled" size={24} color={colors.secondary} />
+            <View style={styles.triggerContent}>
+              <Text style={styles.triggerLabel}>Mid-Challenge Video</Text>
+              <Text style={styles.triggerText}>
+                Watch Coach Al's motivation and tips for your {focusPillar.name.toLowerCase()} journey.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {(currentDay || 1) >= 15 && (currentDay || 1) < 21 && (
+          <View style={styles.triggerCard}>
+            <MaterialIcons name="local-offer" size={24} color={colors.warning} />
+            <View style={styles.triggerContent}>
+              <Text style={styles.triggerLabel}>15% Off Coaching!</Text>
+              <Text style={styles.triggerText}>
+                Use code{" "}
+                <Text style={{ fontWeight: "800", color: colors.text }}>PILLAR15</Text>
+                {" "}for 15% off coaching packages. You've earned it!
+              </Text>
+              <TouchableOpacity
+                style={[styles.copyButton, codeCopied && styles.copyButtonCopied]}
+                onPress={async () => {
+                  await Clipboard.setStringAsync("PILLAR15");
+                  setCodeCopied(true);
+                  setTimeout(() => setCodeCopied(false), 2000);
+                }}
+                activeOpacity={0.7}
+              >
+                <MaterialIcons
+                  name={codeCopied ? "check" : "content-copy"}
+                  size={14}
+                  color={codeCopied ? colors.primary : colors.text}
+                />
+                <Text style={[styles.copyButtonText, codeCopied && { color: colors.primary }]}>
+                  {codeCopied ? "Copied!" : "Copy Code"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {isCompleted && day21Challenge && (
+          <View style={styles.celebrationCard}>
+            <View style={styles.celebrationHeader}>
+              <MaterialIcons name="celebration" size={28} color={colors.warning} />
+              <Text style={styles.celebrationTitle}>Day 21 — Cherry on Top!</Text>
+            </View>
+            <View style={styles.cherryOnTopCard}>
+              <MaterialIcons name={day21Challenge.icon} size={24} color={colors.primary} />
+              <View style={styles.cherryOnTopContent}>
+                <Text style={styles.cherryOnTopName}>{day21Challenge.name}</Text>
+                <Text style={styles.cherryOnTopDesc}>{day21Challenge.description}</Text>
+              </View>
+            </View>
+            <View style={styles.rewardsSection}>
+              <Text style={styles.rewardsTitle}>Your Rewards</Text>
+              {DAY_21_REWARDS.map((reward, idx) => (
+                <View key={idx} style={styles.rewardItem}>
+                  <MaterialIcons name="card-giftcard" size={18} color={colors.primary} />
+                  <Text style={styles.rewardText}>{reward}</Text>
+                </View>
+              ))}
+            </View>
+            <TouchableOpacity
+              style={styles.scheduleButton}
+              onPress={() => Linking.openURL("https://calendly.com")}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons name="event" size={20} color={colors.textInverse} />
+              <Text style={styles.scheduleButtonText}>Schedule Your Free Session</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -250,7 +561,7 @@ export const Dashboard = ({
                 <MaterialIcons
                   name={p.icon}
                   size={24}
-                  color={colors.gray[500]}
+                  color={colors.gray[400]}
                 />
                 <Text style={styles.lockedPillarName}>{p.name}</Text>
               </View>
@@ -278,10 +589,12 @@ export const Dashboard = ({
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.resetButton} onPress={onReset}>
-          <MaterialIcons name="refresh" size={18} color={colors.gray[400]} />
-          <Text style={styles.resetButtonText}>Reset Intro Flow</Text>
-        </TouchableOpacity>
+        {DEV_MODE && (
+          <TouchableOpacity style={styles.resetButton} onPress={onReset}>
+            <MaterialIcons name="refresh" size={18} color={colors.gray[400]} />
+            <Text style={styles.resetButtonText}>Reset Intro Flow</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
       <BottomNav currentScreen="DASHBOARD" onNavigate={onNavigate} />
@@ -427,33 +740,65 @@ const makeStyles = (colors) =>
       textTransform: "uppercase",
       letterSpacing: 1,
     },
-    actionCard: {
-      backgroundColor: colors.overlayLight,
-      borderRadius: 12,
-      padding: 16,
-      borderWidth: 1,
-      borderColor: colors.divider,
-      marginBottom: 24,
+    tasksList: {
+      gap: 10,
+      marginBottom: 20,
     },
-    actionCardLogged: {
-      backgroundColor: "rgba(0,0,0,0.2)",
-      borderColor: `${colors.primary}20`,
-    },
-    actionRow: {
+    taskCard: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
-      marginBottom: 4,
+      backgroundColor: colors.overlayLight,
+      borderRadius: 12,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: colors.divider,
     },
-    actionTitle: {
+    taskCardDone: {
+      backgroundColor: `${colors.primary}10`,
+      borderColor: `${colors.primary}25`,
+    },
+    taskCheckbox: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      borderWidth: 2,
+      borderColor: colors.gray[600],
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 12,
+    },
+    taskCheckboxDone: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    taskContent: {
+      flex: 1,
+    },
+    taskName: {
       fontSize: 14,
       fontWeight: "700",
       color: colors.text,
+      marginBottom: 2,
     },
-    actionDesc: {
-      fontSize: 12,
+    taskNameDone: {
+      color: colors.primary,
+    },
+    taskDesc: {
+      fontSize: 11,
       color: colors.textSecondary,
-      lineHeight: 18,
+      lineHeight: 16,
+    },
+    completionBanner: {
+      alignItems: "center",
+      paddingVertical: 20,
+      gap: 12,
+    },
+    completionText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.text,
+      textAlign: "center",
+      lineHeight: 20,
     },
     logButton: {
       height: 56,
@@ -542,7 +887,7 @@ const makeStyles = (colors) =>
       borderColor: colors.divider,
       alignItems: "center",
       justifyContent: "center",
-      opacity: 0.5,
+      opacity: 0.75,
       gap: 8,
       position: "relative",
     },
@@ -552,7 +897,7 @@ const makeStyles = (colors) =>
       right: 4,
     },
     lockedPillarName: {
-      fontSize: 8,
+      fontSize: 9,
       fontWeight: "700",
       color: colors.textMuted,
       textTransform: "uppercase",
@@ -676,6 +1021,203 @@ const makeStyles = (colors) =>
       gap: 8,
     },
     challengeButtonText: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: colors.textInverse,
+    },
+    progressRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 16,
+      gap: 10,
+    },
+    progressBarBg: {
+      flex: 1,
+      height: 6,
+      backgroundColor: colors.overlay,
+      borderRadius: 3,
+      overflow: "hidden",
+    },
+    progressBarFill: {
+      height: "100%",
+      backgroundColor: colors.primary,
+      borderRadius: 3,
+    },
+    progressLabel: {
+      fontSize: 11,
+      fontWeight: "600",
+      color: colors.textMuted,
+      minWidth: 70,
+      textAlign: "right",
+    },
+    devPanel: {
+      backgroundColor: "rgba(239, 68, 68, 0.1)",
+      borderBottomWidth: 1,
+      borderBottomColor: "rgba(239, 68, 68, 0.3)",
+      padding: 12,
+    },
+    devPanelLabel: {
+      fontSize: 10,
+      fontWeight: "700",
+      color: "#ef4444",
+      textTransform: "uppercase",
+      letterSpacing: 1,
+      marginBottom: 8,
+      textAlign: "center",
+    },
+    devButtonRow: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: 8,
+    },
+    devWeekButton: {
+      backgroundColor: colors.overlay,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: colors.overlay,
+    },
+    devWeekButtonActive: {
+      backgroundColor: `${colors.primary}30`,
+      borderColor: colors.primary,
+    },
+    devWeekButtonText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: colors.gray[400],
+    },
+    devWeekButtonTextActive: {
+      color: colors.primary,
+    },
+    devWeekButtonSub: {
+      fontSize: 9,
+      color: colors.gray[600],
+      marginTop: 2,
+    },
+    devCompleteButton: {
+      backgroundColor: `${colors.warning}20`,
+      borderColor: `${colors.warning}40`,
+    },
+    triggerCard: {
+      flexDirection: "row",
+      backgroundColor: `${colors.primary}10`,
+      borderRadius: 16,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: `${colors.primary}25`,
+      marginBottom: 20,
+      gap: 12,
+    },
+    triggerContent: {
+      flex: 1,
+    },
+    triggerLabel: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: colors.primary,
+      marginBottom: 4,
+    },
+    triggerText: {
+      fontSize: 13,
+      color: colors.gray[400],
+      lineHeight: 18,
+    },
+    copyButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      alignSelf: "flex-start",
+      gap: 6,
+      marginTop: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      backgroundColor: colors.surface,
+    },
+    copyButtonCopied: {
+      borderColor: `${colors.primary}40`,
+      backgroundColor: `${colors.primary}10`,
+    },
+    copyButtonText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: colors.text,
+    },
+    celebrationCard: {
+      backgroundColor: `${colors.warning}10`,
+      borderRadius: 24,
+      padding: 24,
+      borderWidth: 2,
+      borderColor: `${colors.warning}40`,
+      marginBottom: 24,
+    },
+    celebrationHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      marginBottom: 16,
+    },
+    celebrationTitle: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: colors.warning,
+    },
+    cherryOnTopCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.divider,
+      borderRadius: 16,
+      padding: 16,
+      gap: 12,
+      marginBottom: 16,
+    },
+    cherryOnTopContent: {
+      flex: 1,
+    },
+    cherryOnTopName: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: colors.text,
+      marginBottom: 4,
+    },
+    cherryOnTopDesc: {
+      fontSize: 13,
+      color: colors.gray[400],
+      lineHeight: 18,
+    },
+    rewardsSection: {
+      marginBottom: 16,
+    },
+    rewardsTitle: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: colors.text,
+      marginBottom: 10,
+    },
+    rewardItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      marginBottom: 8,
+    },
+    rewardText: {
+      fontSize: 14,
+      color: colors.gray[300],
+      flex: 1,
+    },
+    scheduleButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.primary,
+      borderRadius: 14,
+      paddingVertical: 14,
+      gap: 8,
+    },
+    scheduleButtonText: {
       fontSize: 16,
       fontWeight: "700",
       color: colors.textInverse,
