@@ -11,7 +11,9 @@
       "Bash(git push:*)",
       "Bash(npx expo start:*)",
       "WebFetch(domain:docs.expo.dev)",
-      "WebSearch"
+      "WebSearch",
+      "mcp__context7__query-docs",
+      "Bash(ls -la /mnt/c/Users/tayfu/Desktop/Claude_Projects/al_fitness_hub/assets/meditation-*.mp3 /mnt/c/Users/tayfu/Desktop/Claude_Projects/al_fitness_hub/assets/al-med.png)"
     ]
   }
 }

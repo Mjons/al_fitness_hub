@@ -23,6 +23,7 @@ import { BookScreen } from "./components/BookScreen";
 import { ChapterView } from "./components/ChapterView";
 import { LandingPage } from "./components/LandingPage";
 import { MeditationList } from "./components/MeditationList";
+import { MeditationPlayer } from "./components/MeditationPlayer";
 import { darkColors, lightColors } from "./styles/theme";
 import { ThemeProvider } from "./styles/ThemeContext";
 import { TWENTY_ONE_DAY_CHALLENGES } from "./constants";
@@ -92,6 +93,7 @@ function buildInitialChallengeStates() {
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState("LANDING");
   const [selectedWorkout, setSelectedWorkout] = useState(null);
+  const [selectedMeditation, setSelectedMeditation] = useState(null);
 
   // Daily logging state
   const [isLoggedToday, setIsLoggedToday] = useState(false);
@@ -600,6 +602,7 @@ export default function App() {
     }
     setCurrentScreen("LANDING");
     setSelectedWorkout(null);
+    setSelectedMeditation(null);
     setIsLoggedToday(false);
     setStreak(0);
     setTotalDaysLogged(0);
@@ -787,7 +790,26 @@ export default function App() {
         return (
           <MeditationList
             onNavigate={navigateTo}
-            onSelectMeditation={(m) => console.log("Selected:", m.title)}
+            onSelectMeditation={(m) => {
+              setSelectedMeditation(m);
+              navigateTo("MEDITATION_PLAYER");
+            }}
+          />
+        );
+      case "MEDITATION_PLAYER":
+        return selectedMeditation ? (
+          <MeditationPlayer
+            meditation={selectedMeditation}
+            onBack={() => navigateTo("MEDITATION_LIST")}
+            onNavigate={navigateTo}
+          />
+        ) : (
+          <MeditationList
+            onNavigate={navigateTo}
+            onSelectMeditation={(m) => {
+              setSelectedMeditation(m);
+              navigateTo("MEDITATION_PLAYER");
+            }}
           />
         );
       case "PILLARS_OVERVIEW":

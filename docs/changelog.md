@@ -485,3 +485,35 @@ Created dedicated documentation for the two independent streak systems.
 
 ### Created
 - **`docs/streak-logic.md`** — Comprehensive reference covering both streak counters: challenge `streakDays` (per-pillar, resets to 1 on gap, no passive reset on load) and global `streak` (whole app, resets to 0 on load, capped at 21, Dashboard-only). Includes comparison table, trigger tables, example flows, the ChallengeDetail gap (doesn't update global streak), and related state fields.
+
+---
+
+## 38. Meditation Audio Player
+
+Replaced the "Coming Soon" modal on the Meditation List with a fully functional audio player. Users can now listen to Coach Al's three guided meditation recordings directly in the app.
+
+### Assets Added
+- `assets/meditation-1.mp3` (~4.9 MB) — Breath Awareness recording
+- `assets/meditation-2.mp3` (~6.7 MB) — Present Moment recording
+- `assets/meditation-3.mp3` (~6.0 MB) — Grounding & Space recording
+- `assets/al-med.png` (~2.7 MB) — Album art (illustrated Coach Al meditating)
+
+### New Dependency
+- **`expo-av`** — Expo's audio module for `Audio.Sound` playback
+
+### Created
+- **`components/MeditationPlayer.js`** — Full audio player screen with:
+  - Album art display (240x340 portrait, rounded corners, shadow)
+  - Title, pillar label, and description
+  - Play/pause/replay button (green circle, icon swaps per state)
+  - Skip forward/back 15 seconds
+  - Seek slider with `isSeekingRef` to prevent position jumps during drag
+  - `mm:ss` time labels for position and duration
+  - Loading spinner while audio loads
+  - `useEffect` cleanup unloads sound on navigate away
+  - Light/dark theme via `makeStyles(colors)` pattern
+- **`docs/meditation-player.md`** — Full feature documentation
+
+### Modified
+- **`components/MeditationList.js`** — Removed `useState`/`Modal` imports, `showComingSoon` state, the entire Coming Soon `<Modal>` block and its styles. Added `audioFile` key (`'meditation-1'`, `'meditation-2'`, `'meditation-3'`) to each meditation in the `MEDITATIONS` array. Changed card `onPress` from `setShowComingSoon(true)` to `onSelectMeditation(meditation)`.
+- **`App.js`** — Added `MeditationPlayer` import. Added `selectedMeditation` state (near `selectedWorkout`). Updated `MEDITATION_LIST` case to set state + navigate on selection. Added `MEDITATION_PLAYER` routing case with fallback to list if no selection. Added `setSelectedMeditation(null)` in `handleReset()`.

@@ -1,10 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
-  Modal,
   StyleSheet,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -14,7 +13,6 @@ import { BottomNav } from './BottomNav';
 export const MeditationList = ({ onNavigate, onSelectMeditation }) => {
   const { colors, isDark, toggleTheme } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const [showComingSoon, setShowComingSoon] = useState(false);
 
   const MEDITATIONS = [
     {
@@ -25,6 +23,7 @@ export const MeditationList = ({ onNavigate, onSelectMeditation }) => {
       description: 'Activate your parasympathetic nervous system through conscious breathing and box breathing technique.',
       icon: 'air',
       color: colors.info,
+      audioFile: 'meditation-1',
     },
     {
       id: 'mindfulness',
@@ -34,6 +33,7 @@ export const MeditationList = ({ onNavigate, onSelectMeditation }) => {
       description: 'Cultivate non-judgmental awareness through a guided body scan and present moment practice.',
       icon: 'psychology',
       color: colors.primary,
+      audioFile: 'meditation-2',
     },
     {
       id: 'grounding',
@@ -43,6 +43,7 @@ export const MeditationList = ({ onNavigate, onSelectMeditation }) => {
       description: 'Connect with your physical environment and create internal space through visualization.',
       icon: 'park',
       color: colors.success,
+      audioFile: 'meditation-3',
     },
   ];
 
@@ -82,7 +83,7 @@ export const MeditationList = ({ onNavigate, onSelectMeditation }) => {
             <TouchableOpacity
               key={meditation.id}
               style={styles.meditationCard}
-              onPress={() => setShowComingSoon(true)}
+              onPress={() => onSelectMeditation(meditation)}
               activeOpacity={0.8}
             >
               <View style={[styles.meditationIconContainer, { backgroundColor: `${meditation.color}20` }]}>
@@ -116,32 +117,6 @@ export const MeditationList = ({ onNavigate, onSelectMeditation }) => {
           </Text>
         </View>
       </ScrollView>
-
-      <Modal
-        visible={showComingSoon}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowComingSoon(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalIcon}>
-              <MaterialIcons name="self-improvement" size={40} color={colors.primary} />
-            </View>
-            <Text style={styles.modalTitle}>Coming Soon</Text>
-            <Text style={styles.modalText}>
-              Guided meditation sessions are being crafted by Coach Al. Stay tuned!
-            </Text>
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={() => setShowComingSoon(false)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.modalButtonText}>Got It</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
       <BottomNav currentScreen="MEDITATION_LIST" onNavigate={onNavigate} />
     </View>
@@ -274,55 +249,5 @@ const makeStyles = (colors) => StyleSheet.create({
     fontSize: 13,
     color: colors.gray[400],
     lineHeight: 20,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: colors.scrim,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  modalCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 24,
-    padding: 32,
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: 340,
-  },
-  modalIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: `${colors.primary}15`,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  modalText: {
-    fontSize: 14,
-    color: colors.gray[400],
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  modalButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 48,
-  },
-  modalButtonText: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: colors.textInverse,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
   },
 });
