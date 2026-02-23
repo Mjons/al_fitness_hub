@@ -45,6 +45,8 @@ import {
   saveReadChapters,
   advanceChallengeDay,
   bulkCompleteChallengeTasks,
+  autoAdvanceChallengeDay,
+  acknowledgeMilestones,
   clearAllData,
   saveAllData,
   saveTheme,
@@ -80,6 +82,8 @@ function buildInitialChallengeStates() {
       completedDays: 0,
       lastCompletionDate: null,
       startDate: null,
+      acknowledgedMilestones: [],
+      lastLoggedChallengeDay: null,
     };
   });
   return initial;
@@ -153,7 +157,18 @@ export default function App() {
       if (data.experience) setUserExperience(data.experience);
       if (data.focusPillar) setFocusPillar(data.focusPillar);
       if (data.pillarScores) setPillarScores(data.pillarScores);
-      if (data.challengeStates) setChallengeStates(data.challengeStates);
+      if (data.challengeStates) {
+        const advanced = {};
+        let didAdvance = false;
+        for (const pillarId of Object.keys(data.challengeStates)) {
+          advanced[pillarId] = autoAdvanceChallengeDay(data.challengeStates[pillarId]);
+          if (advanced[pillarId].currentDay !== data.challengeStates[pillarId].currentDay) {
+            didAdvance = true;
+          }
+        }
+        setChallengeStates(advanced);
+        if (didAdvance) saveChallengeStates(advanced);
+      }
       if (data.readChapters) setReadChapters(data.readChapters);
       setTotalDaysLogged(data.totalDaysLogged);
       setLogHistory(data.logHistory);
@@ -379,6 +394,74 @@ export default function App() {
 
       return newState;
     });
+  };
+
+  // Dev mode: Simulate time passing for challenge testing
+  // startDate is FIXED — never modified. Only currentDay changes.
+  const handleDevSimulateDay = async (pillarId, action) => {
+    const pillarState = challengeStates[pillarId];
+    const today = new Date().toISOString().split("T")[0];
+    let updated;
+
+    switch (action) {
+      case "forward1": {
+        const curDay = pillarState.currentDay || 1;
+        if (curDay >= 21) return;
+        // Clear today's tasks + lastCompletionDate so next log counts as new
+        const { [today]: _removed, ...restTasks } = pillarState.completedTasks || {};
+        // Acknowledge milestones from last logged day (same as autoAdvance)
+        const newAck = acknowledgeMilestones(
+          pillarState.lastLoggedChallengeDay,
+          pillarState.acknowledgedMilestones,
+        );
+        updated = {
+          ...pillarState,
+          currentDay: curDay + 1,
+          completedTasks: restTasks,
+          lastCompletionDate: null,
+          acknowledgedMilestones: newAck,
+        };
+        break;
+      }
+      case "back1": {
+        const curDay = pillarState.currentDay || 1;
+        if (curDay <= 1) return;
+        const { [today]: _removed2, ...restTasks2 } = pillarState.completedTasks || {};
+        updated = {
+          ...pillarState,
+          currentDay: curDay - 1,
+          completedTasks: restTasks2,
+          completedDays: Math.max(0, (pillarState.completedDays || 0) - 1),
+          lastCompletionDate: null,
+        };
+        break;
+      }
+      case "reset":
+        updated = {
+          currentDay: 1,
+          completedTasks: {},
+          streakDays: 0,
+          completedDays: 0,
+          lastCompletionDate: null,
+          startDate: today,
+          acknowledgedMilestones: [],
+          lastLoggedChallengeDay: null,
+        };
+        setIsLoggedToday(false);
+        setStreak(0);
+        setTotalDaysLogged(0);
+        setLastLogDate(null);
+        setLogHistory({});
+        break;
+      default:
+        return;
+    }
+
+    const newStates = { ...challengeStates, [pillarId]: updated };
+    setChallengeStates(newStates);
+    saveChallengeStates(newStates).catch((error) =>
+      console.log("Error saving challenge states:", error),
+    );
   };
 
   // Dev mode: Set challenge day directly for testing
@@ -652,7 +735,10 @@ export default function App() {
               setSelectedWorkout(w);
               navigateTo("WORKOUT_DETAIL");
             }}
+            streak={streak}
+            totalDaysLogged={totalDaysLogged}
             onSetDay={handleSetChallengeDay}
+            onDevSimulate={handleDevSimulateDay}
             onReset={handleReset}
           />
         );

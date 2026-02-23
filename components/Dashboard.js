@@ -22,6 +22,7 @@ import {
   DAY_21_REWARDS,
   PHASE_ENCOURAGEMENT,
 } from "../constants";
+import { getMissedDays } from "../lib/storage";
 import { BottomNav } from "./BottomNav";
 
 const DEV_MODE = true;
@@ -126,7 +127,10 @@ export const Dashboard = ({
   onToggleLog,
   onNavigate,
   onSelectWorkout,
+  streak,
+  totalDaysLogged,
   onSetDay,
+  onDevSimulate,
   onReset,
 }) => {
   const { colors, isDark, toggleTheme } = useTheme();
@@ -137,7 +141,8 @@ export const Dashboard = ({
 
   // Derive challenge data
   const challenge = TWENTY_ONE_DAY_CHALLENGES[focusPillarId];
-  const { currentDay, completedTasks, streakDays } = challengeState || {};
+  const { currentDay, completedTasks, streakDays, acknowledgedMilestones } = challengeState || {};
+  const ackMilestones = acknowledgedMilestones || [];
   const todayKey = new Date().toISOString().split("T")[0];
   const todayCompletedTasks = (completedTasks && completedTasks[todayKey]) || [];
   const availableTasks = challenge
@@ -149,6 +154,7 @@ export const Dashboard = ({
   const isCompleted = (currentDay || 1) >= 21;
   const currentPhase = getPhaseFromDay(currentDay || 1);
   const completedDays = (challengeState && challengeState.completedDays) || 0;
+  const missedDays = getMissedDays(challengeState);
   const encouragement = PHASE_ENCOURAGEMENT[focusPillarId];
   const day21Challenge = DAY_21_CHALLENGES[focusPillarId];
   const hasTrigger = (currentDay || 1) >= 5;
@@ -228,6 +234,39 @@ export const Dashboard = ({
               <Text style={styles.devWeekButtonSub}>Done</Text>
             </TouchableOpacity>
           </View>
+          {onDevSimulate && (
+            <>
+              <Text style={[styles.devPanelLabel, { marginTop: 10 }]}>
+                DEV: Time Simulation
+              </Text>
+              <View style={styles.devButtonRow}>
+                <TouchableOpacity
+                  style={styles.devWeekButton}
+                  onPress={() => onDevSimulate(focusPillarId, "back1")}
+                >
+                  <Text style={styles.devWeekButtonText}>-1 Day</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.devWeekButton}
+                  onPress={() => onDevSimulate(focusPillarId, "forward1")}
+                >
+                  <Text style={styles.devWeekButtonText}>+1 Day</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.devWeekButton}
+                  onPress={() => onDevSimulate(focusPillarId, "reset")}
+                >
+                  <Text style={styles.devWeekButtonText}>Reset</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.devInfoText}>
+                Start: {challengeState?.startDate || "none"} | Day: {currentDay || 1}/21 | Done: {completedDays} | Missed: {missedDays}
+              </Text>
+              <Text style={styles.devInfoText}>
+                Streak: {streak || 0} | Total Logged: {totalDaysLogged || 0}
+              </Text>
+            </>
+          )}
         </View>
       )}
 
@@ -304,8 +343,18 @@ export const Dashboard = ({
             </View>
             <Text style={styles.progressLabel}>
               {completedDays} day{completedDays !== 1 ? "s" : ""} logged
+              {missedDays > 0 ? `  •  ${missedDays} missed` : ""}
             </Text>
           </View>
+
+          {missedDays > 0 && !isLoggedToday && (
+            <View style={styles.missedBanner}>
+              <MaterialIcons name="warning-amber" size={18} color={colors.warning} />
+              <Text style={styles.missedBannerText}>
+                You missed {missedDays} day{missedDays !== 1 ? "s" : ""}.{!isCompleted ? "\nNo worries — check in today to keep going!" : ""}
+              </Text>
+            </View>
+          )}
 
           {isCompleted ? (
             <View style={styles.completionBanner}>
@@ -376,18 +425,18 @@ export const Dashboard = ({
           )}
         </View>
 
-        {/* Milestone Triggers */}
-        {(currentDay || 1) >= 5 && (currentDay || 1) < 10 && encouragement && (
+        {/* Milestone Triggers — persist until acknowledged by logging (hidden on Day 21, recap takes over) */}
+        {!isCompleted && (currentDay || 1) >= 5 && !ackMilestones.includes(5) && encouragement && (
           <View style={styles.triggerCard}>
             <MaterialIcons name="emoji-emotions" size={24} color={colors.primary} />
             <View style={styles.triggerContent}>
-              <Text style={styles.triggerLabel}>Phase 1 Complete!</Text>
+              <Text style={styles.triggerLabel}>You're Building Momentum!</Text>
               <Text style={styles.triggerText}>{encouragement}</Text>
             </View>
           </View>
         )}
 
-        {(currentDay || 1) >= 10 && (currentDay || 1) < 15 && (
+        {!isCompleted && (currentDay || 1) >= 10 && !ackMilestones.includes(10) && (
           <View style={styles.triggerCard}>
             <MaterialIcons name="play-circle-filled" size={24} color={colors.secondary} />
             <View style={styles.triggerContent}>
@@ -399,7 +448,7 @@ export const Dashboard = ({
           </View>
         )}
 
-        {(currentDay || 1) >= 15 && (currentDay || 1) < 21 && (
+        {!isCompleted && (currentDay || 1) >= 15 && !ackMilestones.includes(15) && (
           <View style={styles.triggerCard}>
             <MaterialIcons name="local-offer" size={24} color={colors.warning} />
             <View style={styles.triggerContent}>
@@ -462,6 +511,61 @@ export const Dashboard = ({
               <Text style={styles.scheduleButtonText}>Schedule Your Free Session</Text>
             </TouchableOpacity>
           </View>
+        )}
+
+        {/* Day 21 Recap — always show below celebration card */}
+        {isCompleted && (
+          <>
+            <View style={styles.triggerCard}>
+              <MaterialIcons name="emoji-emotions" size={24} color={colors.primary} />
+              <View style={styles.triggerContent}>
+                <Text style={styles.triggerLabel}>Look How Far You've Come!</Text>
+                <Text style={styles.triggerText}>
+                  21 days of showing up for yourself — that takes real commitment. You've built habits that can last a lifetime. Coach Al is proud of you!
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.triggerCard}>
+              <MaterialIcons name="play-circle-filled" size={24} color={colors.secondary} />
+              <View style={styles.triggerContent}>
+                <Text style={styles.triggerLabel}>Watch Your Motivation Video</Text>
+                <Text style={styles.triggerText}>
+                  You made it all 21 days! Watch Coach Al's message and tips for continuing your {focusPillar.name.toLowerCase()} journey beyond the challenge.
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.triggerCard}>
+              <MaterialIcons name="local-offer" size={24} color={colors.warning} />
+              <View style={styles.triggerContent}>
+                <Text style={styles.triggerLabel}>Your Coaching Discount</Text>
+                <Text style={styles.triggerText}>
+                  Use code{" "}
+                  <Text style={{ fontWeight: "800", color: colors.text }}>PILLAR15</Text>
+                  {" "}for 15% off coaching packages. You've earned it!
+                </Text>
+                <TouchableOpacity
+                  style={[styles.copyButton, codeCopied && styles.copyButtonCopied]}
+                  onPress={async () => {
+                    await Clipboard.setStringAsync("PILLAR15");
+                    setCodeCopied(true);
+                    setTimeout(() => setCodeCopied(false), 2000);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <MaterialIcons
+                    name={codeCopied ? "check" : "content-copy"}
+                    size={14}
+                    color={codeCopied ? colors.primary : colors.text}
+                  />
+                  <Text style={[styles.copyButtonText, codeCopied && { color: colors.primary }]}>
+                    {codeCopied ? "Copied!" : "Copy Code"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </>
         )}
 
         <View style={styles.section}>
@@ -649,7 +753,7 @@ const makeStyles = (colors) =>
     },
     contentContainer: {
       padding: 16,
-      paddingBottom: 100,
+      paddingBottom: 70,
     },
     titleSection: {
       marginBottom: 32,
@@ -1050,6 +1154,21 @@ const makeStyles = (colors) =>
       minWidth: 70,
       textAlign: "right",
     },
+    missedBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      backgroundColor: `${colors.warning}15`,
+      borderRadius: 10,
+      padding: 12,
+      marginTop: 4,
+    },
+    missedBannerText: {
+      flex: 1,
+      fontSize: 12,
+      color: colors.warning,
+      lineHeight: 18,
+    },
     devPanel: {
       backgroundColor: "rgba(239, 68, 68, 0.1)",
       borderBottomWidth: 1,
@@ -1099,6 +1218,13 @@ const makeStyles = (colors) =>
     devCompleteButton: {
       backgroundColor: `${colors.warning}20`,
       borderColor: `${colors.warning}40`,
+    },
+    devInfoText: {
+      fontSize: 10,
+      fontFamily: "monospace",
+      color: "#ef4444",
+      textAlign: "center",
+      marginTop: 8,
     },
     triggerCard: {
       flexDirection: "row",

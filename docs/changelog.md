@@ -347,3 +347,119 @@ Only the user's weakest pillar (determined by the onboarding questionnaire) is u
   - Already-completed pillars remain visible and tappable regardless of focus
   - Updated info card text to explain the sequential unlock flow
   - New styles: `challengeCardLocked`, `challengeIconLocked`, `lockedText`, `lockedSubtext`
+
+---
+
+## 28. Fix Dashboard Over-Scroll
+
+Dashboard ScrollView had excessive bottom padding (100px) causing extra white space past the last content. Reduced `paddingBottom` from 100 to 70 in `contentContainer` style — still clears the BottomNav without the dead space.
+
+---
+
+## 29. Calendar-Based Auto-Advance + Missed Days Tracking
+
+Challenge day no longer increments on task completion. Instead, `currentDay` is driven by the real calendar via `startDate`.
+
+### `lib/storage.js`
+- **`autoAdvanceChallengeDay()`** (new) — On app load, calculates `calendarDay = min(21, daysBetween(startDate, today) + 1)`. If `calendarDay > currentDay`, updates `currentDay`. Called for every pillar in `loadSavedData()`.
+- **`getMissedDays()`** (new) — Returns `max(0, pastDays - completedDays)` where `pastDays = effectiveDay - 1`. Uses `Math.max(currentDay, calendarDay)` as `effectiveDay` so it works for both real calendar users and dev-simulated days.
+- **`advanceChallengeDay`** — Removed `currentDay` increment. Task completion now only updates `completedTasks`, `completedDays`, `streakDays`, `lastCompletionDate`.
+- **`bulkCompleteChallengeTasks`** — Same: removed `currentDay` increment.
+- **`startDate`** — Set once on first task completion (`startDate: pillarState.startDate || today`), never modified after.
+
+### `App.js`
+- `loadSavedData()` — Runs `autoAdvanceChallengeDay()` for each pillar on mount. Persists if any day advanced.
+
+### `components/Dashboard.js`
+- Imports `getMissedDays` from storage
+- Displays missed days count in progress row: `"X days logged  •  Y missed"`
+- Warning banner when `missedDays > 0 && !isLoggedToday`: "You missed X day(s)." with encouragement text on a new line (hidden on Day 21)
+- Banner uses `marginTop: 4`, warning-amber icon, orange tinted `missedBanner` style
+
+**Full logic details:** See [`docs/challenge-day-logic.md`](./challenge-day-logic.md)
+
+---
+
+## 30. Dev Testing Controls — Time Simulation
+
+Added in-app controls to simulate time passing for the 21-day challenge without waiting real calendar days.
+
+### `App.js`
+- **`handleDevSimulateDay(pillarId, action)`** (new) — Three actions:
+  - `forward1`: Increments `currentDay` by 1, clears today's `completedTasks` and `lastCompletionDate` so tasks appear unchecked and next log counts fresh
+  - `back1`: Decrements `currentDay` by 1, decrements `completedDays`, clears today's tasks
+  - `reset`: Full reset to Day 1 — `startDate = today`, all counters zeroed, also resets global streak/totalDaysLogged/logHistory
+- **Critical rule**: `startDate` is NEVER modified by `forward1`/`back1`. Only `reset` sets it.
+- Dashboard receives `onDevSimulate`, `streak`, `totalDaysLogged` props
+
+### `components/Dashboard.js`
+- New "DEV: Time Simulation" section in dev panel with `-1 Day`, `+1 Day`, `Reset` buttons
+- Debug readout below buttons: `Start: date | Day: X/21 | Done: X | Missed: X` and `Streak: X | Total Logged: X`
+- Uses `devInfoText` style: monospace, 10px, red, centered
+
+**Full details:** See [`docs/dev-mode.md`](./dev-mode.md)
+
+---
+
+## 31. Milestone Trigger Stacking + Delayed Dismissal
+
+Reworked milestone triggers (Day 5/10/15) so they persist across missed days and stay visible for the entire day the user logs — only dismissed on the **next day transition**.
+
+### `lib/storage.js`
+- **`TRIGGER_MILESTONES = [5, 10, 15]`** — Constant for trigger day thresholds
+- **`acknowledgeMilestones(lastLoggedDay, existing)`** (new, exported) — Returns updated `acknowledgedMilestones` array with all milestone days <= `lastLoggedDay` added. Has a null guard: returns existing array unchanged if `lastLoggedDay` is null.
+- **`advanceChallengeDay` / `bulkCompleteChallengeTasks`** — No longer call `acknowledgeMilestones`. Instead, set `lastLoggedChallengeDay = currentDay` when all tasks are completed.
+- **`autoAdvanceChallengeDay`** — Now runs `acknowledgeMilestones(lastLoggedChallengeDay, existing)` when `currentDay` advances. This is where triggers actually get dismissed.
+
+### `App.js`
+- **`buildInitialChallengeStates()`** — Added `acknowledgedMilestones: []` and `lastLoggedChallengeDay: null` to initial challenge state shape
+- **`handleDevSimulateDay` `forward1`** — Runs `acknowledgeMilestones` on advance (mirrors `autoAdvanceChallengeDay`)
+- **`handleDevSimulateDay` `reset`** — Clears `lastLoggedChallengeDay: null`
+- Imports `acknowledgeMilestones` from `lib/storage.js`
+
+### `components/Dashboard.js`
+- Triggers use `!ackMilestones.includes(5/10/15)` instead of day-range checks
+- If user misses multiple days, triggers **stack**: e.g., skipping from Day 4 to Day 11 shows both Day 5 and Day 10 triggers simultaneously
+- Triggers stay visible for the day the user logs, dismissed next day
+- Regular triggers hidden on Day 21 (`!isCompleted && ...`) — recap takes over
+
+---
+
+## 32. Day 21 Recap Section
+
+On challenge completion (Day 21), three recap cards always appear below the "Schedule Your Free Session" button, regardless of acknowledgment status.
+
+### Cards (in order)
+1. **"Look How Far You've Come!"** — Generic motivational message: "21 days of showing up for yourself — that takes real commitment. You've built habits that can last a lifetime. Coach Al is proud of you!" (not pillar-specific)
+2. **"Watch Your Motivation Video"** — Coach Al's message for continuing the journey beyond the challenge
+3. **"Your Coaching Discount"** — `PILLAR15` code with copy-to-clipboard button
+
+### Why generic text?
+The Day 5 trigger uses `PHASE_ENCOURAGEMENT[pillarId]` which references specific habits ("5 days of consistent sleep habits"). This doesn't fit a Day 21 recap, so the completion version uses a universal message that works for all pillars.
+
+### Duplicate prevention
+Regular triggers (Days 5/10/15) add `!isCompleted &&` to their conditions, so they're hidden on Day 21. Only the recap versions render — no duplicates.
+
+---
+
+## 33. Day 5 Trigger Label Rename
+
+Changed the Day 5 milestone trigger label from "Phase 1 Complete!" to **"You're Building Momentum!"** — more motivational, doesn't reference phase numbers.
+
+---
+
+## 34. Missed Days Banner — Line Break
+
+Split the missed days warning banner text into two lines:
+- Line 1: `"You missed X day(s)."`
+- Line 2: `"No worries — check in today to keep going!"` (hidden on Day 21)
+
+Uses `\n` in the template literal for the line break.
+
+---
+
+## 35. Documentation
+
+### Created
+- **`docs/dev-mode.md`** — Full reference for dev testing controls: activation, button behaviors, handler implementation, critical design rules, props, styles, testing workflow
+- **`docs/challenge-day-logic.md`** — Comprehensive reference for the entire challenge system: state shape, calendar vs dev advancement, task completion flow, startDate immutability, missed days calculation, streak logic, milestone triggers, phase system, confetti, data flow, key invariants
