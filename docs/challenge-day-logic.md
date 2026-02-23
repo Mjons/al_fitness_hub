@@ -112,21 +112,13 @@ missedDays = max(0, pastDays - completedDays)
 
 ## Streak Logic
 
-### Challenge Streak (`streakDays` in challenge state)
+Two independent streak systems exist — challenge-level and global. They don't interact.
 
-Updated inside `advanceChallengeDay` / `bulkCompleteChallengeTasks`:
-- If `lastCompletionDate === yesterday` or `null` → increment streakDays
-- If `lastCompletionDate` is 2+ days ago → reset to 1
-- If `lastCompletionDate === today` → no change (already logged)
+**Full details:** See [`docs/streak-logic.md`](./streak-logic.md)
 
-### Global Streak (`streak` in App.js state)
-
-Updated by `logToday()` in `lib/storage.js` and `evaluateDailyLogOnLoad()`:
-- `logToday()`: increments streak by 1, caps at 21
-- `evaluateDailyLogOnLoad()`: on app load, checks `lastLogDate`:
-  - Today → `isLoggedToday: true`, keep streak
-  - Yesterday → `isLoggedToday: false`, keep streak
-  - 2+ days ago or null → `isLoggedToday: false`, streak = 0
+**Quick summary:**
+- **Challenge `streakDays`** — per-pillar, consecutive days all tasks completed, resets to 1 on gap, does NOT reset on app load
+- **Global `streak`** — whole app, consecutive days logged via Dashboard, resets to 0 on app load if 2+ days missed, capped at 21
 
 ---
 

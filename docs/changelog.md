@@ -463,3 +463,25 @@ Uses `\n` in the template literal for the line break.
 ### Created
 - **`docs/dev-mode.md`** — Full reference for dev testing controls: activation, button behaviors, handler implementation, critical design rules, props, styles, testing workflow
 - **`docs/challenge-day-logic.md`** — Comprehensive reference for the entire challenge system: state shape, calendar vs dev advancement, task completion flow, startDate immutability, missed days calculation, streak logic, milestone triggers, phase system, confetti, data flow, key invariants
+
+---
+
+## 36. Sync Missed Days + Milestone State to Firestore
+
+Added three new fields to `syncChallengeProgress` in `lib/sync.js` so challenge milestone and missed day data is tracked in the cloud.
+
+### New fields in `users/{userId}/challengeProgress/{pillarId}`
+- **`missedDays`** — Calculated at sync time: `currentDay - 1 - completedDays`
+- **`acknowledgedMilestones`** — Array of dismissed trigger days (e.g., `[5, 10, 15]`)
+- **`lastLoggedChallengeDay`** — The `currentDay` value when user last completed all tasks (used for delayed trigger dismissal)
+
+No Firestore config changes needed — Firestore is schemaless, new fields appear automatically.
+
+---
+
+## 37. Streak Logic Documentation
+
+Created dedicated documentation for the two independent streak systems.
+
+### Created
+- **`docs/streak-logic.md`** — Comprehensive reference covering both streak counters: challenge `streakDays` (per-pillar, resets to 1 on gap, no passive reset on load) and global `streak` (whole app, resets to 0 on load, capped at 21, Dashboard-only). Includes comparison table, trigger tables, example flows, the ChallengeDetail gap (doesn't update global streak), and related state fields.
